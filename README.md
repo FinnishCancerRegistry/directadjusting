@@ -1,4 +1,7 @@
-
+<!-- badges: start -->
+[![Travis build status](https://travis-ci.org/WetRobot/directadjusting.svg?branch=master)](https://travis-ci.org/WetRobot/directadjusting)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/WetRobot/directadjusting?branch=master&svg=true)](https://ci.appveyor.com/project/WetRobot/directadjusting)
+<!-- badges: end -->
 
 # directadjusting
 

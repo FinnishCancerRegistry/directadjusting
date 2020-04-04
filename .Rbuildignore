@@ -3,3 +3,5 @@
 ^LICENSE\.md$
 ^data-raw$
 ^man-roxygen$
+^\.travis\.yml$
+^appveyor\.yml$
