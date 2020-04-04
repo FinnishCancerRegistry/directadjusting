@@ -110,7 +110,7 @@
 #' )
 #'
 #' # adjusted by age group
-#' my_adj_stats <- direct_adjusted_estimates(
+#' my_adj_stats <- directly_adjusted_estimates(
 #'   stats_dt = my_stats,
 #'   stat_col_nms = "e",
 #'   var_col_nms = "v",
@@ -122,7 +122,7 @@
 #' )
 #'
 #' # adjusted by age group, bootstrapped CIs
-#' my_adj_stats <- direct_adjusted_estimates(
+#' my_adj_stats <- directly_adjusted_estimates(
 #'   stats_dt = my_stats,
 #'   stat_col_nms = "e",
 #'   var_col_nms = "v",
@@ -135,7 +135,7 @@
 #'
 #' # adjusted by smaller age groups, stratified by larger age groups
 #' my_stats[, "ag2" := c(1,1, 2,2, 1,1, 2,2)]
-#' my_adj_stats <- direct_adjusted_estimates(
+#' my_adj_stats <- directly_adjusted_estimates(
 #'   stats_dt = my_stats,
 #'   stat_col_nms = "e",
 #'   var_col_nms = "v",
@@ -158,7 +158,7 @@
 #'     surv = surv_stats[["surv"]],
 #'     var = surv_stats[["std.err"]] ** 2
 #'   )
-#'   surv_dt_adj <- direct_adjusted_estimates(
+#'   surv_dt_adj <- directly_adjusted_estimates(
 #'     stats_dt = surv_dt,
 #'     stat_col_nms = "surv",
 #'     var_col_nms = "var",
@@ -170,7 +170,7 @@
 #'   )
 #'   print(surv_dt_adj, nrows = 10)
 #'   matplot(
-#'     y = surv_dt_adj[, .(surv, surv_lo, surv_hi)],
+#'     y = surv_dt_adj[, list(surv, surv_lo, surv_hi)],
 #'     x = surv_dt_adj[["time"]], type = "s", col = 1, lty = 1,
 #'     xlab = "time", ylab = "survival",
 #'     main = "Survival with 95 % CIs"
@@ -181,7 +181,7 @@
 #' @importFrom data.table setDT := .SD set alloc.col setcolorder setkeyv
 #' setnames uniqueN
 #' @importFrom utils combn
-direct_adjusted_estimates <- function(
+directly_adjusted_estimates <- function(
   stats_dt,
   stat_col_nms,
   var_col_nms,
@@ -271,7 +271,7 @@ direct_adjusted_estimates <- function(
             "stratum / adjust column pair ", deparse(pair),
             " in stats_dt are not ",
             "hierarchical nor cross-joined; see ",
-            "?direct_adjusted_estimates section Tabulation"
+            "?directly_adjusted_estimates section Tabulation"
           ),
           call = call
         ))
@@ -417,6 +417,39 @@ direct_adjusted_estimates <- function(
   stats_dt[]
 }
 
+#' @describeIn directly_adjusted_estimates deprecated alias for 
+#' `directly_adjusted_estimates`
+#' @export
+direct_adjusted_estimates <- function(
+  stats_dt,
+  stat_col_nms,
+  var_col_nms,
+  stratum_col_nms = NULL,
+  adjust_col_nms,
+  conf_lvls,
+  conf_methods,
+  weights,
+  boot_arg_list = list(R = 1000),
+  boot_ci_arg_list = list(type = "perc")
+  ) {
+  .Deprecated(
+    new = "directly_adjusted_estimates",
+    package = "directadjusting",
+    msg = paste0(
+      "directadjusting::direct_adjusted_estimates will be removed in favour ",
+      "of the ",
+      "grammatically correctly named ",
+      "directadjusting::directly_adjusted_estimates; ",
+      "directadjusting::direct_adjusted_estimates simply calls ",
+      "directadjusting::directly_adjusted_estimates ",
+      "for now but will be removed soon, so use ",
+      "directadjusting::directly_adjusted_estimates ",
+      "from now on"
+    )
+  )
+  arg_list <- mget(names(formals(directly_adjusted_estimates)))
+  do.call(directly_adjusted_estimates, arg_list)
+}
 
 
 
@@ -573,7 +606,7 @@ bootstrap_confidence_intervals <- function(
     boot_ci_arg_list[["conf"]] <- conf_lvls[i]
     stat_ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
     stratum_value_counts <- stats_dt[
-      j = .(n = data.table::uniqueN(.SD)),
+      j = list(n = data.table::uniqueN(.SD)),
       .SDcols = stat_col_nm,
       keyby = eval(stratum_col_nms)
       ]
@@ -588,7 +621,7 @@ bootstrap_confidence_intervals <- function(
       ))
     }
     strata_with_variance <- stats_dt[
-      i = stratum_value_counts[n > 1, ],
+      i = stratum_value_counts[stratum_value_counts[["n"]] > 1, ],
       on = eval(stratum_col_nms),
     ]
     if (nrow(strata_with_variance) > 0) {

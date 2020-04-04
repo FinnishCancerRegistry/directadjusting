@@ -1,15 +1,15 @@
 Package: directadjusting
 Type: Package
-Title: Direct Adjusted Estimates
-Version: 0.1.0
+Title: Directly Adjusted Estimates
+Version: 0.2.0
 Author: Joonas Miettinen <joonas.miettinen@cancer.fi>
 Maintainer: Joonas Miettinen <joonas.miettinen@cancer.fi>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: Compute estimates and confidence intervals of weighted averages
+    quickly and easily.
 License: MIT + file LICENSE
 Depends: R (>= 2.10)
 Imports: data.table, utils, boot
 Suggests: survival
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0

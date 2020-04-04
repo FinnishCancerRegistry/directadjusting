@@ -4,7 +4,8 @@
 \name{integrated_weight_schemas}
 \alias{integrated_weight_schemas}
 \title{Integrated Weight Schemas}
-\format{\code{data.table} with columns
+\format{
+\code{data.table} with columns
 \itemize{
 \item \code{schema_name}: name of weights schema as a string
 \item \code{n_age_groups}: number of age groups in schema
@@ -12,7 +13,8 @@
 }
 
 All age groups are lower-bound inclusive upper-bound exclusive
-(\code{[a, b[}).}
+(\verb{[a, b[}).
+}
 \usage{
 integrated_weight_schemas
 }

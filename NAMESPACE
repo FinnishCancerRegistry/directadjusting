@@ -2,6 +2,7 @@
 
 export(delta_method_confidence_intervals)
 export(direct_adjusted_estimates)
+export(directly_adjusted_estimates)
 importFrom(boot,boot)
 importFrom(boot,boot.ci)
 importFrom(data.table,":=")

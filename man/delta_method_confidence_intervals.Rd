@@ -4,23 +4,27 @@
 \alias{delta_method_confidence_intervals}
 \title{Confidence Intervals}
 \usage{
-delta_method_confidence_intervals(statistics, variances, conf_lvl = 0.95,
-  conf_method = "identity")
+delta_method_confidence_intervals(
+  statistics,
+  variances,
+  conf_lvl = 0.95,
+  conf_method = "identity"
+)
 }
 \arguments{
-\item{statistics}{\code{[numeric]} (mandatory, no default)
+\item{statistics}{\verb{[numeric]} (mandatory, no default)
 
 statistics for which to calculate confidence intervals}
 
-\item{variances}{\code{[numeric]} (mandatory, no default)
+\item{variances}{\verb{[numeric]} (mandatory, no default)
 
 variance estimates of \code{statistics} used to compute confidence intervals}
 
-\item{conf_lvl}{\code{[numeric]} (mandatory, default \code{0.95})
+\item{conf_lvl}{\verb{[numeric]} (mandatory, default \code{0.95})
 
-confidence level of confidence intervals in \code{]0, 1[}}
+confidence level of confidence intervals in \verb{]0, 1[}}
 
-\item{conf_method}{\code{[character]} (mandatory, default \code{"identity"})
+\item{conf_method}{\verb{[character]} (mandatory, default \code{"identity"})
 
 see section \strong{Confidence interval methods}}
 }
