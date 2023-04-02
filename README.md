@@ -1,6 +1,6 @@
+
 <!-- badges: start -->
-[![Travis build status](https://travis-ci.org/WetRobot/directadjusting.svg?branch=master)](https://travis-ci.org/WetRobot/directadjusting)
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/WetRobot/directadjusting?branch=master&svg=true)](https://ci.appveyor.com/project/WetRobot/directadjusting)
+[![R-CMD-check](https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 # directadjusting
