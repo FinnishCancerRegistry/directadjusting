@@ -56,6 +56,7 @@ assert_is_weights_dt <- function(
   invisible(NULL)
 }
 
+#' @export
 weights_arg_to_weights_dt.data.table <- function(
   weights,
   adjust_col_nms,
@@ -67,6 +68,7 @@ weights_arg_to_weights_dt.data.table <- function(
   weights
 }
 
+#' @export
 weights_arg_to_weights_dt.character <- function(
   weights,
   adjust_col_nms,

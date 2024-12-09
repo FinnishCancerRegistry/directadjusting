@@ -43,24 +43,13 @@ and their variance estimates.
 }
 \section{Confidence interval methods}{
 
-
 Currently supported confidence interval methods and their formulae:
-
-\itemize{
- \item identity: STAT + Z * STD_ERR \item log: STAT * exp(Z * STD_ERR/STAT) \item log-log: STAT^exp(-Z * (STD_ERR/(abs(log(STAT)) * STAT)))
-}
-
+ - identity: STAT + Z * STD_ERR - log: STAT * exp(Z * STD_ERR/STAT) - log-log: STAT^exp(-Z * (STD_ERR/(abs(log(STAT)) * STAT)))
 
 Where
-
-\itemize{
- \item STAT is the statistic,
-
- \item Z is the quantile from the standard normal distribution for the 
+ - `STAT` is the statistic,
+ - `Z` is the quantile from the standard normal distribution for the 
    lower or upper bound, and
-
- \item STD_ERR is the standard error (square root of the variance)
-
-}
+ - `STD_ERR`` is the standard error (square root of the variance)
 }
 

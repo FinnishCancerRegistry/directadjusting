@@ -472,7 +472,28 @@ confidence_interval_expression <- function(conf_method) {
     `log-log` = quote( STAT ** exp(-Z * (STD_ERR / (abs(log(STAT)) * STAT)))),
     stop("No math defined for conf_method = ", deparse(conf_method))
   )
+  return(math)
 }
+
+doc_ci_methods <- function() {
+  conf_methods <- setdiff(allowed_conf_methods(), c("none", "boot"))
+  maths <- vapply(conf_methods, function(conf_method) {
+    paste0(deparse(confidence_interval_expression(conf_method)), collapse = "")
+  }, character(1))
+  lines <- c(
+    "@section Confidence interval methods:",
+    "Currently supported confidence interval methods and their formulae:",
+    paste0(" - ", conf_methods, ": ", maths, collapse = ""),
+    "",
+    "Where",
+    " - `STAT` is the statistic,",
+    " - `Z` is the quantile from the standard normal distribution for the ",
+    "   lower or upper bound, and",
+    " - `STD_ERR`` is the standard error (square root of the variance)"
+  )
+  return(lines)
+}
+
 #' @md
 #' @title Confidence Intervals
 #' @description
@@ -490,27 +511,7 @@ confidence_interval_expression <- function(conf_method) {
 #' @param conf_method `[character]` (mandatory, default `"identity"`)
 #'
 #' see section **Confidence interval methods**
-#' @eval {
-#' conf_methods <- setdiff(allowed_conf_methods(), c("none", "boot"))
-#' maths <- vapply(conf_methods, function(conf_method) {
-#'   paste0(deparse(confidence_interval_expression(conf_method)), collapse = "")
-#' }, character(1))
-#' c(
-#'   "@section Confidence interval methods:\n",
-#'   "Currently supported confidence interval methods and their formulae:\n",
-#'   "\\itemize{",
-#'   paste0(" \\item ", conf_methods, ": ", maths, collapse = ""),
-#'   "}",
-#'   "\n",
-#'   "Where\n",
-#'   "\\itemize{",
-#'   " \\item STAT is the statistic,\n",
-#'   " \\item Z is the quantile from the standard normal distribution for the ",
-#'   "   lower or upper bound, and\n",
-#'   " \\item STD_ERR is the standard error (square root of the variance)\n",
-#'   "}"
-#' )
-#' }
+#' @eval doc_ci_methods()
 #' @return
 #' `data.table` with columns
 #' - `statistic`: the values you supplied via argument `statistics`
