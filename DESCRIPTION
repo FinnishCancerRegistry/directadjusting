@@ -1,15 +1,20 @@
-Package: directadjusting
 Type: Package
+Package: directadjusting
 Title: Directly Adjusted Estimates
 Version: 0.2.0
 Author: Joonas Miettinen <joonas.miettinen@cancer.fi>
 Maintainer: Joonas Miettinen <joonas.miettinen@cancer.fi>
-Description: Compute estimates and confidence intervals of weighted averages
-    quickly and easily.
+Description: Compute estimates and confidence intervals of weighted
+    averages quickly and easily.
 License: MIT + file LICENSE
-Depends: R (>= 2.10)
-Imports: data.table, utils, boot
-Suggests: survival
+Depends: 
+    R (>= 2.10)
+Imports: 
+    boot,
+    data.table,
+    utils
+Suggests: 
+    survival
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
