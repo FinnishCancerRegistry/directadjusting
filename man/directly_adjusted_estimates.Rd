@@ -2,23 +2,9 @@
 % Please edit documentation in R/direct_adjusting.R
 \name{directly_adjusted_estimates}
 \alias{directly_adjusted_estimates}
-\alias{direct_adjusted_estimates}
 \title{Direct Adjusted Estimates}
 \usage{
 directly_adjusted_estimates(
-  stats_dt,
-  stat_col_nms,
-  var_col_nms,
-  stratum_col_nms = NULL,
-  adjust_col_nms,
-  conf_lvls,
-  conf_methods,
-  weights,
-  boot_arg_list = list(R = 1000),
-  boot_ci_arg_list = list(type = "perc")
-)
-
-direct_adjusted_estimates(
   stats_dt,
   stat_col_nms,
   var_col_nms,
@@ -111,12 +97,6 @@ overridden internally (latter comes from \code{conf_levels})}
 \description{
 Compute direct adjusted estimates from a table of statistics.
 }
-\section{Functions}{
-\itemize{
-\item \code{direct_adjusted_estimates()}: deprecated alias for
-`directly_adjusted_estimates`
-
-}}
 \section{Weights}{
 
 

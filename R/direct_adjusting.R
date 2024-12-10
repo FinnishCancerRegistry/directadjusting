@@ -422,42 +422,10 @@ directly_adjusted_estimates <- function(
   stats_dt[]
 }
 
-#' @describeIn directly_adjusted_estimates deprecated alias for
-#' `directly_adjusted_estimates`
-#' @export
-direct_adjusted_estimates <- function(
-  stats_dt,
-  stat_col_nms,
-  var_col_nms,
-  stratum_col_nms = NULL,
-  adjust_col_nms,
-  conf_lvls,
-  conf_methods,
-  weights,
-  boot_arg_list = list(R = 1000),
-  boot_ci_arg_list = list(type = "perc")
-) {
-  .Deprecated(
-    new = "directly_adjusted_estimates",
-    package = "directadjusting",
-    msg = paste0(
-      "directadjusting::direct_adjusted_estimates will be removed in favour ",
-      "of the ",
-      "grammatically correctly named ",
-      "directadjusting::directly_adjusted_estimates; ",
-      "directadjusting::direct_adjusted_estimates simply calls ",
-      "directadjusting::directly_adjusted_estimates ",
-      "for now but will be removed soon, so use ",
-      "directadjusting::directly_adjusted_estimates ",
-      "from now on"
-    )
-  )
-  arg_list <- mget(names(formals(directly_adjusted_estimates)))
-  do.call(directly_adjusted_estimates, arg_list)
-}
-
-
-
+# @codedoc_comment_block news("directadjusting", "2024-12-10", "0.3.0")
+# Remove deprecated `directadjusting::direct_adjusted_estimates`. Use
+# `directadjusting::directly_adjusted_estimates`.
+# @codedoc_comment_block news("directadjusting", "2024-12-10", "0.3.0")
 
 delta_method_conf_methods <- function() {
   c("identity", "log", "log-log")
