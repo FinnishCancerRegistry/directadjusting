@@ -1,7 +1,7 @@
 Type: Package
 Package: directadjusting
 Title: Directly Adjusted Estimates
-Version: 0.2.0
+Version: 0.3.0
 Author: Joonas Miettinen <joonas.miettinen@cancer.fi>
 Maintainer: Joonas Miettinen <joonas.miettinen@cancer.fi>
 Description: Compute estimates and confidence intervals of weighted
