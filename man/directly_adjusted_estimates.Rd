@@ -113,7 +113,7 @@ Compute direct adjusted estimates from a table of statistics.
 }
 \section{Functions}{
 \itemize{
-\item \code{direct_adjusted_estimates()}: deprecated alias for 
+\item \code{direct_adjusted_estimates()}: deprecated alias for
 `directly_adjusted_estimates`
 
 }}

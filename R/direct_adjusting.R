@@ -244,6 +244,7 @@ directly_adjusted_estimates <- function(
   )
   if (length(stratum_col_nms) == 0L) {
     stratum_col_nms <- tmp_stratum_col_nm
+    #' @importFrom data.table :=
     on.exit(stats_dt[, (tmp_stratum_col_nm) := NULL])
     stats_dt[, (tmp_stratum_col_nm) := NA]
   }
@@ -253,7 +254,7 @@ directly_adjusted_estimates <- function(
   )
   if (length(test_col_nms) > 1) {
     stratum_col_nm_pairs <- utils::combn(test_col_nms, m = 2L)
-    lapply(1:ncol(stratum_col_nm_pairs), function(pair_no) {
+    lapply(seq_len(ncol(stratum_col_nm_pairs)), function(pair_no) {
       pair <- stratum_col_nm_pairs[, pair_no]
       udt <- unique(stats_dt, by = pair)
 
@@ -299,10 +300,11 @@ directly_adjusted_estimates <- function(
   boot_stat_col_nms <- character(0)
   if (length(wh_boot_ci)) {
     boot_stat_col_nms <- stat_col_nms[wh_boot_ci]
+    #' @importFrom data.table .SD
     boot_stats_dt <- stats_dt[
       j = .SD,
       .SDcols = c(stratum_col_nms, boot_stat_col_nms, tmp_w_col_nm)
-      ]
+    ]
     boot_stats_dt <- bootstrap_confidence_intervals(
       stats_dt = boot_stats_dt,
       stat_col_nms = boot_stat_col_nms,
@@ -322,8 +324,6 @@ directly_adjusted_estimates <- function(
     }
 
     nonboot_stat_col_nms <- stat_col_nms[wh_nonboot_ci]
-    nonboot_var_col_nms <- var_col_nms[wh_nonboot_ci]
-    usable_nonboot_var_col_nms <- setdiff(nonboot_var_col_nms, NA_character_)
 
     data.table::set(
       nonboot_stats_dt,
@@ -342,11 +342,12 @@ directly_adjusted_estimates <- function(
         })
       )
     }
+    #' @importFrom data.table .SD
     nonboot_stats_dt <- nonboot_stats_dt[
       j = lapply(.SD, sum),
       .SDcols = c(nonboot_stat_col_nms, usable_var_col_nms),
       keyby = eval(stratum_col_nms)
-      ]
+    ]
 
     lapply(wh_nonboot_ci, function(i) {
       stat_col_nm <- stat_col_nms[i]
@@ -378,6 +379,7 @@ directly_adjusted_estimates <- function(
 
 
   # final touches --------------------------------------------------------------
+  #' @importFrom data.table .SD
   stats_dt <- nonboot_stats_dt[, .SD, .SDcols = stratum_col_nms]
   stats_dt <- unique(stats_dt, by = stratum_col_nms)
   data.table::setkeyv(stats_dt, stratum_col_nms)
@@ -388,15 +390,18 @@ directly_adjusted_estimates <- function(
     stats_dt <- stats_dt[boot_stats_dt, on = eval(stratum_col_nms)]
   }
 
-  ordered_stat_col_nms <- unlist(lapply(1:length(stat_col_nms), function(i) {
-    stat_col_nm <- stat_col_nms
-    var_col_nm <- var_col_nms
-    ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
+  ordered_stat_col_nms <- unlist(lapply(
+    seq_len(length(stat_col_nms)),
+    function(i) {
+      stat_col_nm <- stat_col_nms
+      var_col_nm <- var_col_nms
+      ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
 
-    stat_col_nms <- intersect(c(stat_col_nm, var_col_nm, ci_col_nms),
-                              names(stats_dt))
-    stat_col_nms
-  }))
+      stat_col_nms <- intersect(c(stat_col_nm, var_col_nm, ci_col_nms),
+                                names(stats_dt))
+      stat_col_nms
+    }
+  ))
   keep_col_nms <- c(stratum_col_nms, ordered_stat_col_nms)
   del_col_nms <- setdiff(names(stats_dt), keep_col_nms)
   if (length(del_col_nms)) {
@@ -417,7 +422,7 @@ directly_adjusted_estimates <- function(
   stats_dt[]
 }
 
-#' @describeIn directly_adjusted_estimates deprecated alias for 
+#' @describeIn directly_adjusted_estimates deprecated alias for
 #' `directly_adjusted_estimates`
 #' @export
 direct_adjusted_estimates <- function(
@@ -431,7 +436,7 @@ direct_adjusted_estimates <- function(
   weights,
   boot_arg_list = list(R = 1000),
   boot_ci_arg_list = list(type = "perc")
-  ) {
+) {
   .Deprecated(
     new = "directly_adjusted_estimates",
     package = "directadjusting",
@@ -469,7 +474,7 @@ confidence_interval_expression <- function(conf_method) {
     conf_method,
     identity = quote(STAT + Z * STD_ERR),
     log = quote(STAT * exp(Z * STD_ERR / STAT)),
-    `log-log` = quote( STAT ** exp(-Z * (STD_ERR / (abs(log(STAT)) * STAT)))),
+    `log-log` = quote(STAT ** exp(-Z * (STD_ERR / (abs(log(STAT)) * STAT)))),
     stop("No math defined for conf_method = ", deparse(conf_method))
   )
   return(math)
@@ -592,6 +597,7 @@ bootstrap_confidence_intervals <- function(
   assert_is_list(boot_arg_list)
   assert_is_list(boot_ci_arg_list)
 
+  #' @importFrom data.table .SD
   out <- stats_dt[, .SD, .SDcols = stratum_col_nms]
   out <- unique(out, by = stratum_col_nms)
   data.table::setkeyv(out, stratum_col_nms)
@@ -607,10 +613,11 @@ bootstrap_confidence_intervals <- function(
     boot_ci_arg_list[["conf"]] <- conf_lvls[i]
     stat_ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
     stratum_value_counts <- stats_dt[
+      #' @importFrom data.table .SD
       j = list(n = data.table::uniqueN(.SD)),
       .SDcols = stat_col_nm,
       keyby = eval(stratum_col_nms)
-      ]
+    ]
     if (any(stratum_value_counts[["n"]] == 1)) {
       warning(simpleWarning(
         paste0(
@@ -628,6 +635,7 @@ bootstrap_confidence_intervals <- function(
     if (nrow(strata_with_variance) > 0) {
       ci_dt <- strata_with_variance[
         j = {
+          #' @importFrom data.table .SD
           .__DT <- .SD
           boot_arg_list[["data"]] <- quote(.__DT)
           b <- do.call(boot::boot, boot_arg_list)
@@ -641,7 +649,7 @@ bootstrap_confidence_intervals <- function(
           out
         },
         keyby = eval(stratum_col_nms)
-        ]
+      ]
     }
 
     data.table::set(
@@ -650,6 +658,7 @@ bootstrap_confidence_intervals <- function(
       value = ci_dt[
         i = out,
         on = eval(stratum_col_nms),
+        #' @importFrom data.table .SD
         j = .SD,
         .SDcols = c(stat_col_nm, stat_ci_col_nms)
       ]
@@ -658,18 +667,3 @@ bootstrap_confidence_intervals <- function(
   })
   out[]
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
