@@ -393,8 +393,8 @@ directly_adjusted_estimates <- function(
   ordered_stat_col_nms <- unlist(lapply(
     seq_len(length(stat_col_nms)),
     function(i) {
-      stat_col_nm <- stat_col_nms
-      var_col_nm <- var_col_nms
+      stat_col_nm <- stat_col_nms[i]
+      var_col_nm <- var_col_nms[i]
       ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
 
       stat_col_nms <- intersect(c(stat_col_nm, var_col_nm, ci_col_nms),
