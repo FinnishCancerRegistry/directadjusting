@@ -220,14 +220,25 @@ directly_adjusted_estimates <- function(
   } else {
     var_col_nms <- rep(NA_character_, length(stat_col_nms))
   }
+  # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2024-12-12", "0.4.0")
+  # `directadjusting::direct_adjusted_estimates` now correctly uses
+  # the same `conf_lvls` and `conf_methods` for all statistics when their
+  # length is one.
+  # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2024-12-12", "0.4.0")
   assert_is_double_nonNA_vector(conf_lvls)
   stopifnot(
     conf_lvls > 0, conf_lvls < 1
   )
+  if (length(conf_lvls) == 1) {
+    conf_lvls <- rep(conf_lvls, length(stat_col_nms))
+  }
   assert_is_character_nonNA_vector(conf_methods)
   eval(substitute(stopifnot(
     conf_methods %in% ALLOWED
   ), list(ALLOWED = allowed_conf_methods())))
+  if (length(conf_methods) == 1) {
+    conf_methods <- rep(conf_methods, length(stat_col_nms))
+  }
   assert_is_list(boot_arg_list)
   assert_is_list(boot_ci_arg_list)
 

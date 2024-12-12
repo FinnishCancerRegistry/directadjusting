@@ -60,6 +60,15 @@ my_adj_stats <- direct_adjusted_estimates(
 
 
 
+## News for version 0.4.0
+
+### directadjusting::direct_adjusted_estimates
+
+`directadjusting::direct_adjusted_estimates` now correctly uses
+the same `conf_lvls` and `conf_methods` for all statistics when their
+length is one.
+
+
 ## News for version 0.3.0
 
 ### directadjusting
