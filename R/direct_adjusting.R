@@ -409,9 +409,8 @@ directly_adjusted_estimates <- function(
   }
   data.table::setcolorder(stats_dt, keep_col_nms)
   data.table::setkeyv(stats_dt, stratum_col_nms)
-  adjust_col_nms <- setdiff(adjust_col_nms, tmp_stratum_col_nm)
-  if (length(adjust_col_nms) == 0) {
-    adjust_col_nms <- NULL
+  if (identical(stratum_col_nms, tmp_stratum_col_nm)) {
+    stratum_col_nms <- NULL
   }
   data.table::setattr(
     stats_dt, "direct_adjusting_meta",
