@@ -9,4 +9,5 @@
 ^\.github$
 ^dev$
 ^.*\.code-workspace$
-^sandbox\.R
+^sandbox.*\.R
+^\.radian_history$

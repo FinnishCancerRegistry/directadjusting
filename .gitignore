@@ -4,4 +4,5 @@
 .Ruserdata
 *.code-workspace
 *.Rproj
-sandbox.R
+sandbox*.R
+.radian_history
