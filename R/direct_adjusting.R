@@ -6,14 +6,14 @@
 #' @md
 #' @title Direct Adjusted Estimates
 #' @description Compute direct adjusted estimates from a table of statistics.
-#' @param stats_dt `[data.table]` (mandatory, no default)
+#' @param stats_dt `[data.table]` (no default)
 #'
 #' a `data.table` containing estimates and variance estimates of statistics
-#' @param stat_col_nms `[character]` (mandatory, no default)
+#' @param stat_col_nms `[character]` (no default)
 #'
 #' names of columns in `stats_dt` containing estimates (statistics);
 #' `NA` statistics values cause also `NA` confidence intervals
-#' @param var_col_nms `[character]` (optional, default `NULL`)
+#' @param var_col_nms `[character]` (default `NULL`)
 #'
 #' - if `NULL`, no confidence intervals can (will) be computed
 #' - if `character` vector, names of columns in `stats_dt` containing variance
@@ -23,12 +23,12 @@
 #'   `NA` variance estimates in `stats_dt` cause `NA` confidence intervals;
 #'   negative values cause an error; `Inf` values cause `c(-Inf, Inf)`
 #'   intervals with confidence interval method `"identity"`, etc.
-#' @param conf_lvls `[numeric]` (mandatory, default `0.95`)
+#' @param conf_lvls `[numeric]` (default `0.95`)
 #'
 #' confidence levels for confidence intervals; you may specify each statistic
 #' (see `stat_col_nms`) its own level by supplying a vector of values;
 #' values other than between `(0, 1)` cause an error
-#' @param conf_methods `[character]` (mandatory, default `"identity"`)
+#' @param conf_methods `[character]` (default `"identity"`)
 #'
 #' method to compute confidence intervals; either one string (to be used for
 #' all statistics) or a vector of strings, one for each element of
@@ -39,20 +39,20 @@
 #'    confidence intervals to be calculated (or `NA` in `var_col_nms`)
 #' - `"boot"`: bootstrapped confidence intervals --- see args `boot_arg_list`,
 #'   `boot_ci_arg_list` and section **Bootstrap**
-#' @param stratum_col_nms `[NULL, character]` (optional, default `NULL`)
+#' @param stratum_col_nms `[NULL, character]` (default `NULL`)
 #'
 #' names of columns in `stats_dt` by which statistics are stratified (and they
 #' should be stratified by these columns after direct adjusting)
-#' @param adjust_col_nms `[character]` (mandatory, no default)
+#' @param adjust_col_nms `[character]` (no default)
 #'
 #' names of columns in `stats_dt` by which statistics are currently stratified
 #' and by which the statistics should be adjusted (e.g. `"agegroup"`)
 #' @template weights_arg
-#' @param boot_arg_list `[list]` (mandatory, default `list(R = 1000)`)
+#' @param boot_arg_list `[list]` (default `list(R = 1000)`)
 #'
 #' arguments passed to \code{\link[boot]{boot}} with `data`, `statistic`, and
 #' `stype` overridden internally
-#' @param boot_ci_arg_list `[list]` (mandatory, default `list(type = "perc")`)
+#' @param boot_ci_arg_list `[list]` (default `list(type = "perc")`)
 #'
 #' arguments passed to \code{\link[boot]{boot.ci}} with `boot.out` and `conf`
 #' overridden internally (latter comes from `conf_levels`)
@@ -482,16 +482,16 @@ doc_ci_methods <- function() {
 #' @description
 #' Computes different kinds of confidence intervals given the statistics
 #' and their variance estimates.
-#' @param statistics `[numeric]` (mandatory, no default)
+#' @param statistics `[numeric]` (no default)
 #'
 #' statistics for which to calculate confidence intervals
-#' @param variances `[numeric]` (mandatory, no default)
+#' @param variances `[numeric]` (no default)
 #'
 #' variance estimates of `statistics` used to compute confidence intervals
-#' @param conf_lvl `[numeric]` (mandatory, default `0.95`)
+#' @param conf_lvl `[numeric]` (default `0.95`)
 #'
 #' confidence level of confidence intervals in `]0, 1[`
-#' @param conf_method `[character]` (mandatory, default `"identity"`)
+#' @param conf_method `[character]` (default `"identity"`)
 #'
 #' see section **Confidence interval methods**
 #' @eval doc_ci_methods()

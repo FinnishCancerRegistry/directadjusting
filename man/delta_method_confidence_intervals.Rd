@@ -12,19 +12,19 @@ delta_method_confidence_intervals(
 )
 }
 \arguments{
-\item{statistics}{\verb{[numeric]} (mandatory, no default)
+\item{statistics}{\verb{[numeric]} (no default)
 
 statistics for which to calculate confidence intervals}
 
-\item{variances}{\verb{[numeric]} (mandatory, no default)
+\item{variances}{\verb{[numeric]} (no default)
 
 variance estimates of \code{statistics} used to compute confidence intervals}
 
-\item{conf_lvl}{\verb{[numeric]} (mandatory, default \code{0.95})
+\item{conf_lvl}{\verb{[numeric]} (default \code{0.95})
 
 confidence level of confidence intervals in \verb{]0, 1[}}
 
-\item{conf_method}{\verb{[character]} (mandatory, default \code{"identity"})
+\item{conf_method}{\verb{[character]} (default \code{"identity"})
 
 see section \strong{Confidence interval methods}}
 }

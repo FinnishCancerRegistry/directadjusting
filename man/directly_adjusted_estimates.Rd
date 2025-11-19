@@ -18,16 +18,16 @@ directly_adjusted_estimates(
 )
 }
 \arguments{
-\item{stats_dt}{\verb{[data.table]} (mandatory, no default)
+\item{stats_dt}{\verb{[data.table]} (no default)
 
 a \code{data.table} containing estimates and variance estimates of statistics}
 
-\item{stat_col_nms}{\verb{[character]} (mandatory, no default)
+\item{stat_col_nms}{\verb{[character]} (no default)
 
 names of columns in \code{stats_dt} containing estimates (statistics);
 \code{NA} statistics values cause also \code{NA} confidence intervals}
 
-\item{var_col_nms}{\verb{[character]} (optional, default \code{NULL})
+\item{var_col_nms}{\verb{[character]} (default \code{NULL})
 \itemize{
 \item if \code{NULL}, no confidence intervals can (will) be computed
 \item if \code{character} vector, names of columns in \code{stats_dt} containing variance
@@ -39,23 +39,23 @@ negative values cause an error; \code{Inf} values cause \code{c(-Inf, Inf)}
 intervals with confidence interval method \code{"identity"}, etc.
 }}
 
-\item{stratum_col_nms}{\verb{[NULL, character]} (optional, default \code{NULL})
+\item{stratum_col_nms}{\verb{[NULL, character]} (default \code{NULL})
 
 names of columns in \code{stats_dt} by which statistics are stratified (and they
 should be stratified by these columns after direct adjusting)}
 
-\item{adjust_col_nms}{\verb{[character]} (mandatory, no default)
+\item{adjust_col_nms}{\verb{[character]} (no default)
 
 names of columns in \code{stats_dt} by which statistics are currently stratified
 and by which the statistics should be adjusted (e.g. \code{"agegroup"})}
 
-\item{conf_lvls}{\verb{[numeric]} (mandatory, default \code{0.95})
+\item{conf_lvls}{\verb{[numeric]} (default \code{0.95})
 
 confidence levels for confidence intervals; you may specify each statistic
 (see \code{stat_col_nms}) its own level by supplying a vector of values;
 values other than between \verb{(0, 1)} cause an error}
 
-\item{conf_methods}{\verb{[character]} (mandatory, default \code{"identity"})
+\item{conf_methods}{\verb{[character]} (default \code{"identity"})
 
 method to compute confidence intervals; either one string (to be used for
 all statistics) or a vector of strings, one for each element of
@@ -84,12 +84,12 @@ into this package; see \code{\link{integrated_weight_schemas}}; again
 this is only allowed when you are adjusting by exactly one variable
 }}
 
-\item{boot_arg_list}{\verb{[list]} (mandatory, default \code{list(R = 1000)})
+\item{boot_arg_list}{\verb{[list]} (default \code{list(R = 1000)})
 
 arguments passed to \code{\link[boot]{boot}} with \code{data}, \code{statistic}, and
 \code{stype} overridden internally}
 
-\item{boot_ci_arg_list}{\verb{[list]} (mandatory, default \code{list(type = "perc")})
+\item{boot_ci_arg_list}{\verb{[list]} (default \code{list(type = "perc")})
 
 arguments passed to \code{\link[boot]{boot.ci}} with \code{boot.out} and \code{conf}
 overridden internally (latter comes from \code{conf_levels})}
