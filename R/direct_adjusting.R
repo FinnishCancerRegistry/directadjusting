@@ -59,9 +59,9 @@
 #' @section Weights:
 #'
 #' The weights are scaled internally to sum to one, but they need to be positive
-#' numbers (or zero). The scalingis performed separately by each unique
+#' numbers (or zero). The scaling is performed separately by each unique
 #' combination of `stratum_col_nms` columns. This allows you to have e.g.
-#' two hierarhical variables, one used for adjusting and one for stratifying
+#' two hierarchical variables, one used for adjusting and one for stratifying
 #' output (such as 18 age groups of 5 years for adjusting and 4 larger age
 #' groups for stratifying output). See **Examples**.
 #'
@@ -70,7 +70,7 @@
 #' Currently every pair of columns in `union(stratum_col_nms, adjust_col_nms)`
 #' must be either
 #'
-#' - hierarhical: each level of B exists under exactly one level of A (or
+#' - hierarchical: each level of B exists under exactly one level of A (or
 #'   converse); e.g. regions `c(1, 1, 2, 2)` and sub-regions `c(1, 2, 3, 4)`;
 #'   sub-regions `c(1, 2, 2, 3)` would not be hierarchical
 #' - cross-joined: every level of B is repeated for every level of A; e.g.

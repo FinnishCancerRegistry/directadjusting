@@ -101,9 +101,9 @@ Compute direct adjusted estimates from a table of statistics.
 
 
 The weights are scaled internally to sum to one, but they need to be positive
-numbers (or zero). The scalingis performed separately by each unique
+numbers (or zero). The scaling is performed separately by each unique
 combination of \code{stratum_col_nms} columns. This allows you to have e.g.
-two hierarhical variables, one used for adjusting and one for stratifying
+two hierarchical variables, one used for adjusting and one for stratifying
 output (such as 18 age groups of 5 years for adjusting and 4 larger age
 groups for stratifying output). See \strong{Examples}.
 }
@@ -114,7 +114,7 @@ groups for stratifying output). See \strong{Examples}.
 Currently every pair of columns in \code{union(stratum_col_nms, adjust_col_nms)}
 must be either
 \itemize{
-\item hierarhical: each level of B exists under exactly one level of A (or
+\item hierarchical: each level of B exists under exactly one level of A (or
 converse); e.g. regions \code{c(1, 1, 2, 2)} and sub-regions \code{c(1, 2, 3, 4)};
 sub-regions \code{c(1, 2, 2, 3)} would not be hierarchical
 \item cross-joined: every level of B is repeated for every level of A; e.g.
