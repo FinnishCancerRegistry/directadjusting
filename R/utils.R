@@ -80,18 +80,6 @@ tmp_nms <- function(
   n_random_elems = 10L,
   n_max_tries = 100L
 ) {
-  # assertions -----------------------------------------------------------------
-  assert_is_character_vector(prefixes)
-  assert_is_character_vector(suffixes)
-  assert_is_character_vector(avoid)
-  stopifnot(
-    length(prefixes) %% length(suffixes) == 0L ||
-      length(suffixes) %% length(prefixes) == 0L
-  )
-  assert_is_character_nonNA_vector(pool)
-  assert_is_integer_gtezero_atom(n_random_elems)
-  assert_is_integer_gtezero_atom(n_max_tries)
-
   # sample random names --------------------------------------------------------
 
   df <- data.frame(prefix = prefixes, suffx = suffixes, tmp_nm = "",

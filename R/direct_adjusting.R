@@ -197,21 +197,20 @@ directly_adjusted_estimates <- function(
   call <- match.call()
 
   # assertions -----------------------------------------------------------------
-  assert_is_data_table(stats_dt)
-  assert_is_character_nonNA_vector(stat_col_nms)
-  assert_is_data_table_with_required_names(
-    stats_dt,
-    required_names = stat_col_nms
-  )
-  assert_is_one_of(
-    var_col_nms,
-    fun_nms = c("assert_is_character_vector", "assert_is_NULL")
+  stopifnot(
+    is.data.frame(stats_dt),
+    stat_col_nms %in% names(stats_dt),
+    is.null(var_col_nms) | (
+      length(var_col_nms) == length(stat_col_nms) &&
+        all(var_col_nms %in% names(stats_dt))
+    ),
+    data.table::between(conf_lvls, lower = 0.0, upper = 1.0, incbounds = FALSE),
+    length(conf_lvls) %in% c(1L, length(stat_col_nms)),
+    length(conf_methods) %in% c(1L, length(stat_col_nms)),
+    inherits(boot_arg_list, "list"),
+    inherits(boot_ci_arg_list, "list")
   )
   if (!is.null(var_col_nms)) {
-    assert_is_data_table_with_required_names(
-      stats_dt,
-      required_names = setdiff(var_col_nms, NA_character_)
-    )
     lapply(setdiff(var_col_nms, NA_character_), function(var_col_nm) {
       eval(substitute(stopifnot(
         stats_dt[[VCN]] >= 0 | is.na(stats_dt[[VCN]])
@@ -225,22 +224,15 @@ directly_adjusted_estimates <- function(
   # the same `conf_lvls` and `conf_methods` for all statistics when their
   # length is one.
   # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2024-12-12", "0.4.0")
-  assert_is_double_nonNA_vector(conf_lvls)
-  stopifnot(
-    conf_lvls > 0, conf_lvls < 1
-  )
   if (length(conf_lvls) == 1) {
     conf_lvls <- rep(conf_lvls, length(stat_col_nms))
   }
-  assert_is_character_nonNA_vector(conf_methods)
   eval(substitute(stopifnot(
     conf_methods %in% ALLOWED
   ), list(ALLOWED = allowed_conf_methods())))
   if (length(conf_methods) == 1) {
     conf_methods <- rep(conf_methods, length(stat_col_nms))
   }
-  assert_is_list(boot_arg_list)
-  assert_is_list(boot_ci_arg_list)
 
   # check that stratification makes sense --------------------------------------
   keep_col_nms <- setdiff(
@@ -444,7 +436,6 @@ allowed_conf_methods <- function() {
   c("none", delta_method_conf_methods(), "boot")
 }
 confidence_interval_expression <- function(conf_method) {
-  assert_is_character_nonNA_atom(conf_method)
   stopifnot(
     conf_method %in% allowed_conf_methods()
   )
@@ -511,14 +502,14 @@ delta_method_confidence_intervals <- function(
   conf_lvl = 0.95,
   conf_method = "identity"
 ) {
-  assert_is_number_vector(statistics)
-  assert_is_number_vector(variances)
-  assert_is_double_nonNA_atom(conf_lvl)
-  assert_is_character_nonNA_atom(conf_method)
-  eval(substitute(stopifnot(
+  stopifnot(
+    is.numeric(statistics),
+    is.numeric(variances),
     variances >= 0 | is.na(variances),
-    conf_lvl > 0,
-    conf_lvl < 1,
+    is.double(conf_lvl),
+    data.table::between(conf_lvl, lower = 0.0, upper = 1.0, incbounds = FALSE)
+  )
+  eval(substitute(stopifnot(
     conf_method %in% ALLOWED
   ), list(ALLOWED = setdiff(allowed_conf_methods(), "none"))))
 
@@ -567,13 +558,12 @@ bootstrap_confidence_intervals <- function(
   boot_ci_arg_list = list(type = "perc")
 ) {
   this_call <- match.call()
-
-  assert_is_data_table_with_required_names(
-    stats_dt,
-    required_names = c(stat_col_nms, stratum_col_nms, adjust_weight_col_nm)
+  stopifnot(
+    is.data.frame(stats_dt),
+    c(stat_col_nms, stratum_col_nms, adjust_weight_col_nm) %in% names(stats_dt),
+    inherits(boot_arg_list, "list"),
+    inherits(boot_ci_arg_list, "list")
   )
-  assert_is_list(boot_arg_list)
-  assert_is_list(boot_ci_arg_list)
 
   #' @importFrom data.table .SD
   out <- stats_dt[, .SD, .SDcols = stratum_col_nms]
