@@ -11,7 +11,6 @@ weights_arg_to_weights_dt <- function(
   UseMethod("weights_arg_to_weights_dt")
 }
 
-#' @importFrom data.table uniqueN setnames data.table
 weights_arg_to_weights_dt.numeric <- function(
   weights,
   adjust_col_nms,
@@ -71,7 +70,6 @@ weightschemastring_to_weights <- function(string) {
   stop("TODO")
 }
 
-#' @importFrom data.table set := setattr
 add_weights_column <- function(
   stats_dt,
   stratum_col_nms,

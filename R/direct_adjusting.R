@@ -178,9 +178,6 @@
 #' }
 #'
 #' @export
-#' @importFrom data.table setDT := .SD set alloc.col setcolorder setkeyv
-#' setnames uniqueN
-#' @importFrom utils combn
 directly_adjusted_estimates <- function(
   stats_dt,
   stat_col_nms,
@@ -493,9 +490,6 @@ doc_ci_methods <- function() {
 #' - `ci_lo`: lower bound of confidence interval
 #' - `ci_hi`: upper bound of confidence interval
 #' @export
-#' @importFrom data.table := setattr setnames set
-#' @importFrom stats qnorm
-#' @importFrom boot boot boot.ci
 delta_method_confidence_intervals <- function(
   statistics,
   variances,
@@ -517,9 +511,11 @@ delta_method_confidence_intervals <- function(
 
   dt <- data.table::setDT(list(STAT = statistics, STD_ERR = sqrt(variances)))
   Z <- stats::qnorm(p = (1 - conf_lvl) / 2)
+  #' @importFrom data.table :=
   expr <- substitute(dt[, "ci_lo" := MATH], list(MATH = math))
   eval(expr)
   Z <- stats::qnorm(p = conf_lvl + (1 - conf_lvl) / 2)
+  #' @importFrom data.table :=
   expr <- substitute(dt[, "ci_hi" := MATH], list(MATH = math))
   eval(expr)
 
@@ -542,12 +538,6 @@ delta_method_confidence_intervals <- function(
   dt[]
 }
 
-
-
-
-
-#' @importFrom data.table setkeyv .SD := set
-#' @importFrom boot boot boot.ci
 bootstrap_confidence_intervals <- function(
   stats_dt,
   stat_col_nms,
