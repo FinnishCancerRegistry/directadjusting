@@ -6,9 +6,9 @@
 #' @md
 #' @title Direct Adjusted Estimates
 #' @description Compute direct adjusted estimates from a table of statistics.
-#' @param stats_dt `[data.table]` (no default)
+#' @param stats_dt `[data.frame]` (no default)
 #'
-#' a `data.table` containing estimates and variance estimates of statistics
+#' a `data.frame` containing estimates and variance estimates of statistics
 #' @param stat_col_nms `[character]` (no default)
 #'
 #' names of columns in `stats_dt` containing estimates (statistics);

@@ -3,14 +3,13 @@
 
 
 
-rep_dt <- function(dt, times = 1L, each = 1L) {
-  # assert_is_integer_nonNA_atom_gt_zero(times)
-  # assert_is_integer_nonNA_atom_gt_zero(each)
+dt_rep <- function(dt, times = 1L, each = 1L) {
   big_dt <- data.table::setDT(lapply(dt, function(col) {
     rep(col, times = times, each = each)
   }))
-  data.table::setnames(big_dt, names(big_dt), names(dt))
-  big_dt[]
+  idx <- rep(seq_len(nrow(dt)), each = each, times = times)
+  big_dt <- dt[idx, ]
+  return(big_dt[])
 }
 
 
@@ -19,9 +18,9 @@ rep_dt <- function(dt, times = 1L, each = 1L) {
 
 partial_cross_join <- function(
   dt = data.table::data.table(
-    a1 = c(1,1,2,2),
+    a1 = c(1, 1, 2, 2),
     a2 = 1:4,
-    b1 = c(1,1,2,2),
+    b1 = c(1, 1, 2, 2),
     b2 = 1:4
   ),
   noncj_col_nm_sets = list(c("a1", "a2"), c("b1", "b2"))
@@ -55,7 +54,7 @@ partial_cross_join <- function(
   lapply(seq_along(level_dts), function(i) {
     level_dt <- level_dts[[i]]
     rep_args <- rep_args[[i]]
-    level_dt <- rep_dt(level_dt, each = rep_args[["each"]],
+    level_dt <- dt_rep(level_dt, each = rep_args[["each"]],
                        times = rep_args[["times"]])
     data.table::set(
       x = out,

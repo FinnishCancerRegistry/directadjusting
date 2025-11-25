@@ -18,9 +18,9 @@ directly_adjusted_estimates(
 )
 }
 \arguments{
-\item{stats_dt}{\verb{[data.table]} (no default)
+\item{stats_dt}{\verb{[data.frame]} (no default)
 
-a \code{data.table} containing estimates and variance estimates of statistics}
+a \code{data.frame} containing estimates and variance estimates of statistics}
 
 \item{stat_col_nms}{\verb{[character]} (no default)
 
