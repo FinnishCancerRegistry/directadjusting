@@ -43,10 +43,13 @@
 #'
 #' names of columns in `stats_dt` by which statistics are stratified (and they
 #' should be stratified by these columns after direct adjusting)
-#' @param adjust_col_nms `[character]` (no default)
+#' @param adjust_col_nms `[NULL, character]` (default `NULL`)
 #'
-#' names of columns in `stats_dt` by which statistics are currently stratified
-#' and by which the statistics should be adjusted (e.g. `"agegroup"`)
+#' Names of columns in `stats_dt` by which statistics are currently stratified
+#' and by which the statistics should be adjusted (e.g. `"agegroup"`).
+#'
+#' - `NULL`: No adjusting is performed.
+#' - `character`: Adjust by these columns.
 #' @template weights_arg
 #' @param boot_arg_list `[list]` (default `list(R = 1000)`)
 #'
@@ -177,27 +180,48 @@
 #'   )
 #' }
 #'
+#' # with no adjusting columns defined you get the same table as input
+#' # but with confidence intervals if you want them. this for the sake of
+#' # convenience for programming cases where sometimes you want to adjust,
+#' # sometimes not.
+#' stats_dt_2 <- data.table::data.table(
+#'   sex = 0:1,
+#'   e = 0.0,
+#'   v = 0.1
+#' )
+#' dt_2 <- directadjusting::directly_adjusted_estimates(
+#'   stats_dt = stats_dt_2,
+#'   stat_col_nms = "e",
+#'   var_col_nms = "v",
+#'   conf_lvls = 0.95,
+#'   conf_methods = "identity",
+#'   stratum_col_nms = "sex"
+#' )
+#' stopifnot(
+#'   dt_2[["e"]] == stats_dt_2[["e"]],
+#'   dt_2[["v"]] == stats_dt_2[["v"]],
+#'   dt_2[["sex"]] == stats_dt_2[["sex"]]
+#' )
+#'
 #' @export
 directly_adjusted_estimates <- function(
   stats_dt,
   stat_col_nms,
-  var_col_nms,
+  var_col_nms = NULL,
   stratum_col_nms = NULL,
-  adjust_col_nms,
-  conf_lvls,
-  conf_methods,
-  weights,
+  adjust_col_nms = NULL,
+  conf_lvls = 0.05,
+  conf_methods = "identity",
+  weights = NULL,
   boot_arg_list = list(R = 1000),
   boot_ci_arg_list = list(type = "perc")
 ) {
-
-  call <- match.call()
-
   # assertions -----------------------------------------------------------------
   stopifnot(
     is.data.frame(stats_dt),
     stat_col_nms %in% names(stats_dt),
-    is.null(var_col_nms) | (
+    is.null(stratum_col_nms) || all(stratum_col_nms %in% names(stats_dt)),
+    is.null(var_col_nms) || (
       length(var_col_nms) == length(stat_col_nms) &&
         all(var_col_nms %in% names(stats_dt))
     ),
@@ -252,6 +276,7 @@ directly_adjusted_estimates <- function(
     union(stratum_col_nms, adjust_col_nms),
     tmp_stratum_col_nm
   )
+  call <- match.call()
   if (length(test_col_nms) > 1) {
     stratum_col_nm_pairs <- utils::combn(test_col_nms, m = 2L)
     lapply(seq_len(ncol(stratum_col_nm_pairs)), function(pair_no) {
@@ -282,9 +307,31 @@ directly_adjusted_estimates <- function(
 
 
   # prepare data for adjusted estimates and CIs --------------------------------
-  weights_dt <- weights_arg_to_weights_dt(weights = weights,
-                                          stats_dt = stats_dt,
-                                          adjust_col_nms = adjust_col_nms)
+  if (length(adjust_col_nms) == 0) {
+    # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2025-11-25", "0.5.0")
+    # `directadjusting::direct_adjusted_estimates` now allows for the sake of
+    # convenience to be called with no `adjust_col_nms` defined. This results
+    # in no adjusting and confidence interval if you want them.
+    # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2025-11-25", "0.5.0")
+    adjust_col_nms <- tmp_nms(
+      prefixes = "tmp_adjust_stratum_",
+      avoid = names(stats_dt)
+    )
+    data.table::set(
+      x = stats_dt,
+      j = adjust_col_nms,
+      value = TRUE
+    )
+    weights_dt <- data.table::data.table(
+      x = TRUE,
+      weight = 1L
+    )
+    data.table::setnames(weights_dt, "x", adjust_col_nms)
+  } else {
+    weights_dt <- weights_arg_to_weights_dt(weights = weights,
+                                            stats_dt = stats_dt,
+                                            adjust_col_nms = adjust_col_nms)
+  }
 
   add_weights_column(
     stats_dt = stats_dt,
@@ -335,7 +382,7 @@ directly_adjusted_estimates <- function(
     usable_var_col_nms <- setdiff(var_col_nms, NA)
     if (length(usable_var_col_nms) > 0) {
       data.table::set(
-        nonboot_stats_dt,
+        x = nonboot_stats_dt,
         j = usable_var_col_nms,
         value = lapply(usable_var_col_nms, function(col_nm) {
           nonboot_stats_dt[[col_nm]] * (nonboot_stats_dt[[tmp_w_col_nm]] ^ 2)
@@ -433,9 +480,6 @@ allowed_conf_methods <- function() {
   c("none", delta_method_conf_methods(), "boot")
 }
 confidence_interval_expression <- function(conf_method) {
-  stopifnot(
-    conf_method %in% allowed_conf_methods()
-  )
   math <- switch(
     conf_method,
     identity = quote(STAT + Z * STD_ERR),
@@ -500,8 +544,10 @@ delta_method_confidence_intervals <- function(
     is.numeric(statistics),
     is.numeric(variances),
     variances >= 0 | is.na(variances),
+    length(conf_lvl) == 1,
     is.double(conf_lvl),
-    data.table::between(conf_lvl, lower = 0.0, upper = 1.0, incbounds = FALSE)
+    data.table::between(conf_lvl, lower = 0.0, upper = 1.0, incbounds = FALSE),
+    length(conf_method) == 1
   )
   eval(substitute(stopifnot(
     conf_method %in% ALLOWED
@@ -547,7 +593,6 @@ bootstrap_confidence_intervals <- function(
   boot_arg_list = list(R = 1000),
   boot_ci_arg_list = list(type = "perc")
 ) {
-  this_call <- match.call()
   stopifnot(
     is.data.frame(stats_dt),
     c(stat_col_nms, stratum_col_nms, adjust_weight_col_nm) %in% names(stats_dt),
@@ -559,6 +604,7 @@ bootstrap_confidence_intervals <- function(
   out <- stats_dt[, .SD, .SDcols = stratum_col_nms]
   out <- unique(out, by = stratum_col_nms)
   data.table::setkeyv(out, stratum_col_nms)
+  this_call <- match.call()
   ci_list <- lapply(seq_along(stat_col_nms), function(i) {
     stat_col_nm <- stat_col_nms[i]
     boot_stat_fun <- function(d, w) {

@@ -7,12 +7,12 @@
 directly_adjusted_estimates(
   stats_dt,
   stat_col_nms,
-  var_col_nms,
+  var_col_nms = NULL,
   stratum_col_nms = NULL,
-  adjust_col_nms,
-  conf_lvls,
-  conf_methods,
-  weights,
+  adjust_col_nms = NULL,
+  conf_lvls = 0.05,
+  conf_methods = "identity",
+  weights = NULL,
   boot_arg_list = list(R = 1000),
   boot_ci_arg_list = list(type = "perc")
 )
@@ -44,10 +44,14 @@ intervals with confidence interval method \code{"identity"}, etc.
 names of columns in \code{stats_dt} by which statistics are stratified (and they
 should be stratified by these columns after direct adjusting)}
 
-\item{adjust_col_nms}{\verb{[character]} (no default)
+\item{adjust_col_nms}{\verb{[NULL, character]} (default \code{NULL})
 
-names of columns in \code{stats_dt} by which statistics are currently stratified
-and by which the statistics should be adjusted (e.g. \code{"agegroup"})}
+Names of columns in \code{stats_dt} by which statistics are currently stratified
+and by which the statistics should be adjusted (e.g. \code{"agegroup"}).
+\itemize{
+\item \code{NULL}: No adjusting is performed.
+\item \code{character}: Adjust by these columns.
+}}
 
 \item{conf_lvls}{\verb{[numeric]} (default \code{0.95})
 
@@ -224,5 +228,28 @@ if (requireNamespace("survival", quietly = TRUE)) {
     main = "Survival with 95 \% CIs"
   )
 }
+
+# with no adjusting columns defined you get the same table as input
+# but with confidence intervals if you want them. this for the sake of
+# convenience for programming cases where sometimes you want to adjust,
+# sometimes not.
+stats_dt_2 <- data.table::data.table(
+  sex = 0:1,
+  e = 0.0,
+  v = 0.1
+)
+dt_2 <- directadjusting::directly_adjusted_estimates(
+  stats_dt = stats_dt_2,
+  stat_col_nms = "e",
+  var_col_nms = "v",
+  conf_lvls = 0.95,
+  conf_methods = "identity",
+  stratum_col_nms = "sex"
+)
+stopifnot(
+  dt_2[["e"]] == stats_dt_2[["e"]],
+  dt_2[["v"]] == stats_dt_2[["v"]],
+  dt_2[["sex"]] == stats_dt_2[["sex"]]
+)
 
 }

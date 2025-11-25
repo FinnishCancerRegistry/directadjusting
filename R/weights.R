@@ -11,6 +11,7 @@ weights_arg_to_weights_dt <- function(
   UseMethod("weights_arg_to_weights_dt")
 }
 
+#' @export
 weights_arg_to_weights_dt.numeric <- function(
   weights,
   adjust_col_nms,
@@ -83,7 +84,7 @@ add_weights_column <- function(
   tmp_w_col_nm <- tmp_col_nms[1]
   tmp_w_sum_col_nm <- tmp_col_nms[2]
   data.table::set(
-    stats_dt,
+    x = stats_dt,
     j = tmp_w_col_nm,
     value = weights_dt[
       i = stats_dt,
