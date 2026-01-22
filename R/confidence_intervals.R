@@ -156,7 +156,7 @@ delta_method_confidence_intervals <- function(
   data.table::setnames(dt, c("est", "var"), c("statistic", "variance"))
   data.table::set(
     x = dt,
-    j = "std_err",
+    j = c("std_err", "z"),
     value = NULL
   )
   # @codedoc_comment_block directadjusting::delta_method_confidence_intervals
