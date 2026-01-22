@@ -3,6 +3,7 @@
 S3method(weights_arg_to_weights_dt,character)
 S3method(weights_arg_to_weights_dt,data.table)
 S3method(weights_arg_to_weights_dt,numeric)
+export(bootstrap_confidence_intervals)
 export(delta_method_confidence_intervals)
 export(directly_adjusted_estimates)
 importFrom(data.table,":=")
