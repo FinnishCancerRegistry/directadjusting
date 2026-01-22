@@ -13,55 +13,56 @@ delta_method_confidence_intervals(
 )
 }
 \arguments{
-\item{statistics}{`[numeric]` (no default)
+\item{statistics}{\verb{[numeric]} (no default)
 
 Statistics for which to calculate confidence intervals.}
 
-\item{variances}{`[numeric]` (no default)
+\item{variances}{\verb{[numeric]} (no default)
 
-Variance estimates of `statistics` used to compute confidence intervals.}
+Variance estimates of \code{statistics} used to compute confidence intervals.}
 
-\item{conf_lvl}{`[numeric]` (default `0.95`)
+\item{conf_lvl}{\verb{[numeric]} (default \code{0.95})
 
-Confidence level of confidence intervals in `]0, 1[`.}
+Confidence level of confidence intervals in \verb{]0, 1[}.}
 
-\item{conf_method}{`[character]` (default `"identity"`)
+\item{conf_method}{\verb{[character]} (default \code{"identity"})
 
-See **Details**.}
+See \strong{Details}.}
 }
 \description{
 Functions to compute confidence intervals.
 }
 \section{Functions}{
 
-**directadjusting::delta_method_confidence_intervals**
+\strong{directadjusting::delta_method_confidence_intervals}
 
-`directadjusting::delta_method_confidence_intervals` can be used to
+\code{directadjusting::delta_method_confidence_intervals} can be used to
 compute confidence intervals using the delta method. The following steps
 are performed:
-
-- Collect mathematical expression `math` for computing the lower and upper
-  end of the confidence interval based on `conf_method`.
-  The following `conf_method` options have pre-determined math within
-  this R package: `c("identity", "log", "log-log")`.
-  Alternatively, `conf_method` can be quoted R expression --- see `?quote`.
-  In that case it will be used as-is.
-- Collect variables `est = statistics`, `var = variances`, and
-  `std_err = sqrt(variance)` into a single `data.table`.
-- Add `z = stats::qnorm(p = (1 - conf_lvl) / 2)` into the `data.table`.
-  E.g. `z = -1.959964` with `conf_lvl = 0.95`.
-- Evaluate the mathematical expression `math` such that the columns in the
-  `data.table` are available in evaluation. This creates column `ci_lo`.
-- Re-set `z = stats::qnorm(p = conf_lvl + (1 - conf_lvl) / 2)`.
-  E.g. `z = 1.959964` with `conf_lvl = 0.95`.
-- Evaluate `math` again. This yields `ci_hi`.
-- Add attribute named `ci_meta` to the `data.table`.
-  This attribute is a list which contains elements `conf_lvl`,
-  `conf_method`, and `math`.
-- Delete columns `std_err`, `z`. Rename `est` to `statistic` and `var` to
-  `variance`.
-- Return `data.table` with columns
-  `c("statistic", "variance", "ci_lo", "ci_hi")`.
+\itemize{
+\item Collect mathematical expression \code{math} for computing the lower and upper
+end of the confidence interval based on \code{conf_method}.
+The following \code{conf_method} options have pre-determined math within
+this R package: \code{c("identity", "log", "log-log")}.
+Alternatively, \code{conf_method} can be quoted R expression --- see \code{?quote}.
+In that case it will be used as-is.
+\item Collect variables \code{est = statistics}, \code{var = variances}, and
+\code{std_err = sqrt(variance)} into a single \code{data.table}.
+\item Add \code{z = stats::qnorm(p = (1 - conf_lvl) / 2)} into the \code{data.table}.
+E.g. \code{z = -1.959964} with \code{conf_lvl = 0.95}.
+\item Evaluate the mathematical expression \code{math} such that the columns in the
+\code{data.table} are available in evaluation. This creates column \code{ci_lo}.
+\item Re-set \code{z = stats::qnorm(p = conf_lvl + (1 - conf_lvl) / 2)}.
+E.g. \code{z = 1.959964} with \code{conf_lvl = 0.95}.
+\item Evaluate \code{math} again. This yields \code{ci_hi}.
+\item Add attribute named \code{ci_meta} to the \code{data.table}.
+This attribute is a list which contains elements \code{conf_lvl},
+\code{conf_method}, and \code{math}.
+\item Delete columns \code{std_err}, \code{z}. Rename \code{est} to \code{statistic} and \code{var} to
+\code{variance}.
+\item Return \code{data.table} with columns
+\code{c("statistic", "variance", "ci_lo", "ci_hi")}.
+}
 }
 
 \examples{

@@ -8,20 +8,18 @@
 \description{
 Compute estimates and confidence intervals of weighted averages quickly and easily.
 
-[![R-CMD-check](https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml)
-
-# Recommended installation
-
-```r
-devtools::install_github(
+\href{https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml}{\if{html}{\figure{https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml/badge.svg}}}
+}
+\section{Recommended installation}{
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{devtools::install_github(
   "FinnishCancerRegistry/directadjusting",
   ref = readline("enter latest tag on github: ")
 )
-```
+}\if{html}{\out{</div>}}
+}
 
-# Example
-```r
-library("directadjusting")
+\section{Example}{
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{library("directadjusting")
 
 # suppose we have poisson rates that we want to adjust for by age group.
 # they are stratified by sex.
@@ -54,41 +52,45 @@ my_adj_stats <- direct_adjusted_estimates(
   weights = c(200, 300, 400, 100)
 )
 
-```
+}\if{html}{\out{</div>}}
 }
+
 \section{News}{
 
+\subsection{News for version 0.5.0}{
+\subsection{directadjusting::direct_adjusted_estimates}{
 
-
-## News for version 0.5.0
-
-### directadjusting::direct_adjusted_estimates
-
-`directadjusting::direct_adjusted_estimates` option `conf_methods = "boot"`
+\code{directadjusting::direct_adjusted_estimates} option \code{conf_methods = "boot"}
 removed. Only delta method confidence intervals now possible.
+}
 
-### directadjusting::direct_adjusted_estimates
+\subsection{directadjusting::direct_adjusted_estimates}{
 
-`directadjusting::direct_adjusted_estimates` now allows for the sake of
-convenience to be called with no `adjust_col_nms` defined. This results
+\code{directadjusting::direct_adjusted_estimates} now allows for the sake of
+convenience to be called with no \code{adjust_col_nms} defined. This results
 in no adjusting.
+}
 
+}
 
-## News for version 0.4.0
+\subsection{News for version 0.4.0}{
+\subsection{directadjusting::direct_adjusted_estimates}{
 
-### directadjusting::direct_adjusted_estimates
-
-`directadjusting::direct_adjusted_estimates` now correctly uses
-the same `conf_lvls` and `conf_methods` for all statistics when their
+\code{directadjusting::direct_adjusted_estimates} now correctly uses
+the same \code{conf_lvls} and \code{conf_methods} for all statistics when their
 length is one.
+}
 
+}
 
-## News for version 0.3.0
+\subsection{News for version 0.3.0}{
+\subsection{directadjusting}{
 
-### directadjusting
+Remove deprecated \code{directadjusting::direct_adjusted_estimates}. Use
+\code{directadjusting::directly_adjusted_estimates}.
+}
 
-Remove deprecated `directadjusting::direct_adjusted_estimates`. Use
-`directadjusting::directly_adjusted_estimates`.
+}
 }
 
 \keyword{internal}

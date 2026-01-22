@@ -1,10 +1,4 @@
-
-
-
-
-
-#' @md
-#' @title Direct Adjusted Estimates
+#' @title Directly Adjusted Estimates
 #' @description Compute direct adjusted estimates from a table of statistics.
 #' @param stats_dt `[data.frame]` (no default)
 #'

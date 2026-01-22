@@ -2,7 +2,7 @@
 % Please edit documentation in R/direct_adjusting.R
 \name{directly_adjusted_estimates}
 \alias{directly_adjusted_estimates}
-\title{Direct Adjusted Estimates}
+\title{Directly Adjusted Estimates}
 \usage{
 directly_adjusted_estimates(
   stats_dt,
@@ -70,18 +70,14 @@ respective \code{stat_col_nms} element(s).
 
 \item{weights}{\verb{[double, data.table, character]}
 
-the weights need not sum to one as this is ensured internally; you may
+The weights need not sum to one as this is ensured internally. You may
 supply weights in one of the following ways:
 \itemize{
-\item \code{double}: a vector of weights can be given when adjusting by exactly
-one variable (e.g. age group); the length must match the number of unique
-values in the adjusting variable
-\item \code{data.table}: with one or more columns with names matching to those
+\item \code{double}: A vector of weights, the length of which must match the number
+of strata defined by adjusting variables.
+\item \code{data.table}: With one or more columns with names matching to those
 variables that are used to adjust estimates, and one column named
-\code{weight}; e.g. \code{data.table(agegroup = 1:3, weight = c(100, 500, 400))}
-\item \code{character}: a string specifying one of the weighting schemas integrated
-into this package; see \code{\link{integrated_weight_schemas}}; again
-this is only allowed when you are adjusting by exactly one variable
+\code{weight}. E.g. \code{data.table(agegroup = 1:3, weight = c(100, 500, 400))}.
 }}
 }
 \description{

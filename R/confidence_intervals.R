@@ -19,7 +19,6 @@ confidence_interval_expression <- function(conf_method) {
   return(math)
 }
 
-#' @md
 #' @title Confidence Intervals
 #' @description
 #' Functions to compute confidence intervals.

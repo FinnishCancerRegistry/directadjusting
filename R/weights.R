@@ -1,8 +1,3 @@
-
-
-
-
-
 weights_arg_to_weights_dt <- function(
   weights,
   adjust_col_nms,
@@ -55,20 +50,6 @@ weights_arg_to_weights_dt.data.table <- function(
                        adjust_col_nms = adjust_col_nms,
                        stats_dt = stats_dt)
   weights
-}
-
-#' @export
-weights_arg_to_weights_dt.character <- function(
-  weights,
-  adjust_col_nms,
-  stats_dt
-) {
-  weight_vector <- weightschemastring_to_weights(weights)
-  weights_arg_to_weights_dt(weight_vector, adjust_col_nms, stats_dt)
-}
-
-weightschemastring_to_weights <- function(string) {
-  stop("TODO")
 }
 
 add_weights_column <- function(
