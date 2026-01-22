@@ -224,9 +224,19 @@ bootstrap_confidence_intervals <- function(
 
     #' @param stat_col_nms `[character]` (no default)
     #'
-    #' Names of columns containing statistics in `stats_dt`.
+    #' Names of columns containing statistics in `stats_dt`. These columns must
+    #' by numeric and must not contain missing values.
     length(stat_col_nms) >= 1,
     stat_col_nms %in% names(stats_dt),
+    vapply(
+      stat_col_nms,
+      function(stat_col_nm) {
+        is.numeric(stats_dt[[stat_col_nm]]) && all(
+          !is.na(stats_dt[[stat_col_nm]])
+        )
+      },
+      logical(1L)
+    ),
 
     #' @param stratum_col_nms `[NULL, character]` (default `NULL`)
     #'
@@ -348,7 +358,11 @@ bootstrap_confidence_intervals <- function(
     data.table::set(
       x = out,
       j = c(stat_col_nm, stat_ci_col_nms),
-      value = as.list(ci_dt)[c(stat_col_nm, stat_ci_col_nms)]
+      value = list(
+        ci_dt[[stat_col_nm]],
+        ci_dt[[stat_ci_col_nms[1]]],
+        ci_dt[[stat_ci_col_nms[2]]]
+      )
     )
     NULL
   })

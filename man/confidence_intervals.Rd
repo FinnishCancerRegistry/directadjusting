@@ -47,7 +47,8 @@ arguments.}
 
 \item{stat_col_nms}{`[character]` (no default)
 
-Names of columns containing statistics in `stats_dt`.}
+Names of columns containing statistics in `stats_dt`. These columns must
+by numeric and must not contain missing values.}
 
 \item{stratum_col_nms}{`[NULL, character]` (default `NULL`)
 
