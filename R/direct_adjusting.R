@@ -156,7 +156,7 @@
 #' }
 #'
 #' # with no adjusting columns defined you get the same table as input
-#' # but with confidence intervals if you want them. this for the sake of
+#' # but with confidence intervals. this for the sake of
 #' # convenience for programming cases where sometimes you want to adjust,
 #' # sometimes not.
 #' stats_dt_2 <- data.table::data.table(
@@ -178,6 +178,27 @@
 #'   dt_2[["sex"]] == stats_dt_2[["sex"]]
 #' )
 #'
+#' # both boostrap and delta method confidence intervals in the same call
+#' stats_dt_3 <- data.table::data.table(
+#'   sex = rep(0:1, each = 100),
+#'   ag = rep(1:100, times = 2),
+#'   e1 = 0.0,
+#'   v1 = 0.1,
+#'   e2 = 0.0
+#' )
+#' dt_3 <- directadjusting::directly_adjusted_estimates(
+#'   stats_dt = stats_dt_3,
+#'   stat_col_nms = c("e1", "e2"),
+#'   var_col_nms = c("v1", NA),
+#'   adjust_col_nms = "ag",
+#'   conf_lvls = 0.95,
+#'   conf_methods = c("identity", "boot"),
+#'   stratum_col_nms = "sex"
+#' )
+#' stopifnot(
+#'   nrow(dt_3) == 2
+#' )
+#'
 #' @export
 directly_adjusted_estimates <- function(
   stats_dt,
@@ -196,10 +217,8 @@ directly_adjusted_estimates <- function(
     is.data.frame(stats_dt),
     stat_col_nms %in% names(stats_dt),
     is.null(stratum_col_nms) || all(stratum_col_nms %in% names(stats_dt)),
-    is.null(var_col_nms) || (
-      length(var_col_nms) == length(stat_col_nms) &&
-        all(var_col_nms %in% names(stats_dt))
-    ),
+    length(var_col_nms) %in% c(0L, length(stat_col_nms)),
+    var_col_nms %in% c(names(stats_dt), NA),
     data.table::between(conf_lvls, lower = 0.0, upper = 1.0, incbounds = FALSE),
     length(conf_lvls) %in% c(1L, length(stat_col_nms)),
     length(conf_methods) %in% c(1L, length(stat_col_nms)),
@@ -230,11 +249,13 @@ directly_adjusted_estimates <- function(
     conf_methods <- rep(conf_methods, length(stat_col_nms))
   }
 
-  # check that stratification makes sense --------------------------------------
-  keep_col_nms <- setdiff(
-    c(stratum_col_nms, adjust_col_nms, stat_col_nms, var_col_nms), NA_character_
-  )
-  work_dt <- data.table::setDT(as.list(stats_dt)[keep_col_nms])
+  work_dt <- local({
+    keep_col_nms <- setdiff(
+      c(stratum_col_nms, adjust_col_nms, stat_col_nms, var_col_nms), NA_character_
+    )
+    work_dt <- data.table::setDT(as.list(stats_dt)[keep_col_nms])
+    work_dt[]
+  })
   tmp_stratum_col_nm <- tmp_nms(
     prefixes = "tmp_stratum_col_", avoid = names(work_dt)
   )
@@ -242,7 +263,7 @@ directly_adjusted_estimates <- function(
     stratum_col_nms <- tmp_stratum_col_nm
     #' @importFrom data.table :=
     on.exit(work_dt[, (tmp_stratum_col_nm) := NULL])
-    work_dt[, (tmp_stratum_col_nm) := NA]
+    data.table::set(work_dt, j = tmp_stratum_col_nm, value = TRUE)
   }
 
   # prepare data for adjusted estimates and CIs --------------------------------
@@ -281,101 +302,103 @@ directly_adjusted_estimates <- function(
   tmp_w_col_nm <- attr(work_dt, "tmp_w_col_nm")
 
   # bootstrapped confidence intervals ------------------------------------------
+  if (!is.null(stratum_col_nms)) {
+    out <- subset(
+      work_dt,
+      subset = !duplicated(work_dt, by = stratum_col_nms)
+    )
+    data.table::setkeyv(out, stratum_col_nms)
+  } else {
+    out <- data.table::data.table(
+      stat = NA_integer_
+    )
+    data.table::setnames(out, "stat", stat_col_nms[1])
+  }
   wh_boot_ci <- which(conf_methods == "boot")
   wh_nonboot_ci <- setdiff(seq_along(conf_methods), wh_boot_ci)
-  boot_stat_col_nms <- character(0)
   if (length(wh_boot_ci)) {
-    boot_stat_col_nms <- stat_col_nms[wh_boot_ci]
-    #' @importFrom data.table .SD
-    boot_stats_dt <- work_dt[
-      j = .SD,
-      .SDcols = c(stratum_col_nms, boot_stat_col_nms, tmp_w_col_nm)
-    ]
-    boot_stats_dt <- bootstrap_confidence_intervals(
-      stats_dt = boot_stats_dt,
-      stat_col_nms = boot_stat_col_nms,
-      stratum_col_nms = stratum_col_nms,
-      conf_lvls = conf_lvls,
-      adjust_weight_col_nm = tmp_w_col_nm,
-      boot_arg_list = boot_arg_list,
-      boot_ci_arg_list = boot_ci_arg_list
-    )
+    local({
+      boot_stats_dt <- bootstrap_confidence_intervals(
+        stats_dt = work_dt,
+        stat_col_nms = stat_col_nms[wh_boot_ci],
+        stratum_col_nms = stratum_col_nms,
+        conf_lvls = conf_lvls[wh_boot_ci],
+        adjust_weight_col_nm = tmp_w_col_nm,
+        boot_arg_list = boot_arg_list,
+        boot_ci_arg_list = boot_ci_arg_list
+      )
+      data.table::set(
+        x = out,
+        j = names(boot_stats_dt),
+        value = boot_stats_dt
+      )
+    })
   }
 
   # delta method confidence intervals ------------------------------------------
-  nonboot_stats_dt <- work_dt
   if (length(wh_nonboot_ci) > 0) {
-    if (length(wh_boot_ci) > 0) {
-      data.table::set(nonboot_stats_dt, j = boot_stat_col_nms, value = NULL)
-    }
+    local({
+      data.table::set(
+        work_dt,
+        j = stat_col_nms,
+        value = lapply(stat_col_nms, function(col_nm) {
+          work_dt[[col_nm]] * work_dt[[tmp_w_col_nm]]
+        })
+      )
+      data.table::set(
+        x = work_dt,
+        j = var_col_nms[wh_nonboot_ci],
+        value = lapply(var_col_nms[wh_nonboot_ci], function(vcn) {
+          work_dt[[vcn]] * (work_dt[[tmp_w_col_nm]] ^ 2)
+        })
+      )
+      nonboot_stats_dt <- work_dt[
+        #' @importFrom data.table .SD
+        j = lapply(.SD, sum),
+        .SDcols = c(stat_col_nms[wh_nonboot_ci], var_col_nms[wh_nonboot_ci]),
+        keyby = eval(stratum_col_nms)
+      ]
+      data.table::set(
+        x = out,
+        j = c(stat_col_nms[wh_nonboot_ci], var_col_nms[wh_nonboot_ci]),
+        value = lapply(
+          c(stat_col_nms[wh_nonboot_ci], var_col_nms[wh_nonboot_ci]),
+          function(col_nm) {
+            nonboot_stats_dt[[col_nm]]
+          }
+        )
+      )
 
-    nonboot_stat_col_nms <- stat_col_nms[wh_nonboot_ci]
+      lapply(wh_nonboot_ci, function(i) {
+        stat_col_nm <- stat_col_nms[i]
+        var_col_nm <- var_col_nms[i]
+        conf_lvl <- conf_lvls[i]
+        conf_method <- conf_methods[i]
+        if (is.na(var_col_nm) || conf_method == "none") {
+          return(NULL)
+        }
+        ci_dt <- delta_method_confidence_intervals(
+          statistics = nonboot_stats_dt[[stat_col_nm]],
+          variances = nonboot_stats_dt[[var_col_nm]],
+          conf_lvl = conf_lvl,
+          conf_method = conf_method
+        )
 
-    data.table::set(
-      nonboot_stats_dt,
-      j = stat_col_nms,
-      value = lapply(stat_col_nms, function(col_nm) {
-        nonboot_stats_dt[[col_nm]] * nonboot_stats_dt[[tmp_w_col_nm]]
+        ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
+        data.table::set(
+          x = out,
+          j = ci_col_nms,
+          value = lapply(c("ci_lo", "ci_hi"), function(col_nm) {
+            ci_dt[[col_nm]]
+          })
+        )
+        NULL
       })
-    )
-    usable_var_col_nms <- setdiff(var_col_nms, NA)
-    if (length(usable_var_col_nms) > 0) {
-      data.table::set(
-        x = nonboot_stats_dt,
-        j = usable_var_col_nms,
-        value = lapply(usable_var_col_nms, function(col_nm) {
-          nonboot_stats_dt[[col_nm]] * (nonboot_stats_dt[[tmp_w_col_nm]] ^ 2)
-        })
-      )
-    }
-    nonboot_stats_dt <- nonboot_stats_dt[
-      #' @importFrom data.table .SD
-      j = lapply(.SD, sum),
-      .SDcols = c(nonboot_stat_col_nms, usable_var_col_nms),
-      keyby = eval(stratum_col_nms)
-    ]
-
-    lapply(wh_nonboot_ci, function(i) {
-      stat_col_nm <- stat_col_nms[i]
-      var_col_nm <- var_col_nms[i]
-      conf_lvl <- conf_lvls[i]
-      conf_method <- conf_methods[i]
-      if (is.na(var_col_nm) || conf_method == "none") {
-        return(NULL)
-      }
-      ci_dt <- delta_method_confidence_intervals(
-        statistics = nonboot_stats_dt[[stat_col_nm]],
-        variances = nonboot_stats_dt[[var_col_nm]],
-        conf_lvl = conf_lvl,
-        conf_method = conf_method
-      )
-
-      ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
-      data.table::set(
-        nonboot_stats_dt,
-        j = ci_col_nms,
-        value = lapply(c("ci_lo", "ci_hi"), function(col_nm) {
-          ci_dt[[col_nm]]
-        })
-      )
-      data.table::alloc.col(nonboot_stats_dt)
-      NULL
     })
   }
 
 
   # final touches --------------------------------------------------------------
-  #' @importFrom data.table .SD
-  stats_dt <- nonboot_stats_dt[, .SD, .SDcols = stratum_col_nms]
-  stats_dt <- unique(stats_dt, by = stratum_col_nms)
-  data.table::setkeyv(stats_dt, stratum_col_nms)
-  if (length(wh_nonboot_ci)) {
-    stats_dt <- stats_dt[nonboot_stats_dt, on = eval(stratum_col_nms)]
-  }
-  if (length(wh_boot_ci)) {
-    stats_dt <- stats_dt[boot_stats_dt, on = eval(stratum_col_nms)]
-  }
-
   ordered_stat_col_nms <- unlist(lapply(
     seq_along(stat_col_nms),
     function(i) {
@@ -383,28 +406,29 @@ directly_adjusted_estimates <- function(
       var_col_nm <- var_col_nms[i]
       ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
 
-      stat_col_nms <- intersect(c(stat_col_nm, var_col_nm, ci_col_nms),
-                                names(stats_dt))
-      stat_col_nms
+      order_col_nms <- intersect(c(stat_col_nm, var_col_nm, ci_col_nms),
+                                 names(out))
+      order_col_nms
     }
   ))
   keep_col_nms <- c(stratum_col_nms, ordered_stat_col_nms)
-  del_col_nms <- setdiff(names(stats_dt), keep_col_nms)
+  del_col_nms <- setdiff(names(out), keep_col_nms)
   if (length(del_col_nms)) {
-    data.table::set(stats_dt, j = del_col_nms, value = NULL)
+    data.table::set(out, j = del_col_nms, value = NULL)
   }
-  data.table::setcolorder(stats_dt, keep_col_nms)
-  data.table::setkeyv(stats_dt, stratum_col_nms)
+  data.table::setcolorder(out, keep_col_nms)
+  data.table::setkeyv(out, stratum_col_nms)
   if (identical(stratum_col_nms, tmp_stratum_col_nm)) {
     stratum_col_nms <- NULL
   }
+  call <- match.call()
   data.table::setattr(
-    stats_dt, "direct_adjusting_meta",
+    out, "direct_adjusting_meta",
     mget(c("call", "stat_col_nms", "var_col_nms", "stratum_col_nms",
            "adjust_col_nms", "conf_lvls", "conf_methods"))
   )
 
-  stats_dt[]
+  out[]
 }
 
 # @codedoc_comment_block news("directadjusting", "2024-12-10", "0.3.0")
