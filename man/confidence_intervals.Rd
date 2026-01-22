@@ -60,9 +60,8 @@ Names of columns in `stats_dt` which stratify statistics. E.g. `"sex"`.
 \item{conf_lvls}{`[numeric]` (default `0.95`)
 
 One or more confidence levels for the statistics. Length must be either
-one, which leads to using the same level for all strata, or must be
-equal to the number of strata in `stats_dt` as defined via
-`stratum_col_nms`. Must be `0 < conf_lvls < 1`.}
+one, which leads to using the same level everywhere, or must be
+equal to `length(stat_col_nms)`.}
 
 \item{adjust_weight_col_nm}{`[character]` (default `"weight"`)
 

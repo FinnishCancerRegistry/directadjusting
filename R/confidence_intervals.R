@@ -244,20 +244,14 @@ bootstrap_confidence_intervals <- function(
     #'
     #' - `NULL`: No stratifying columns will be included in output.
     #' - `character`: These stratifying columns will be included in output.
-    is.null(stratum_col_nms) || stratum_col_nms %in% names(stats_dt)
-  )
-  n_strata <- 1L
-  if (!is.null(stratum_col_nms)) {
-    n_strata <- data.table::uniqueN(stats_dt, by = stratum_col_nms)
-  }
-  stopifnot(
+    is.null(stratum_col_nms) || stratum_col_nms %in% names(stats_dt),
+
     #' @param conf_lvls `[numeric]` (default `0.95`)
     #'
     #' One or more confidence levels for the statistics. Length must be either
-    #' one, which leads to using the same level for all strata, or must be
-    #' equal to the number of strata in `stats_dt` as defined via
-    #' `stratum_col_nms`. Must be `0 < conf_lvls < 1`.
-    length(conf_lvls) %in% c(1L, n_strata),
+    #' one, which leads to using the same level everywhere, or must be
+    #' equal to `length(stat_col_nms)`.
+    length(conf_lvls) %in% c(1L, length(stat_col_nms)),
     conf_lvls > 0.0,
     conf_lvls < 1.0,
 
