@@ -171,38 +171,136 @@ delta_method_confidence_intervals <- function(
 #'   regex = "directadjusting::bootstrap_confidence_intervals",
 #'   rdname = "confidence_intervals"
 #' )
+#' @examples
+#'
+#' # directadjusting::bootstrap_confidence_intervals
+#' stats_dt_1 <- data.table::data.table(
+#'   stat = 1:20,
+#'   var = 0.05,
+#'   weight = 1:20 / sum(1:20)
+#' )
+#' dt_1 <- directadjusting::bootstrap_confidence_intervals(
+#'   stats_dt = stats_dt_1,
+#'   stat_col_nms = "stat",
+#'   stratum_col_nms = NULL,
+#'   conf_lvls = 0.95,
+#'   adjust_weight_col_nm = "weight"
+#' )
+#' stats_dt_2 <- data.table::data.table(
+#'   sex = rep(0:1, each = 100),
+#'   ag = rep(1:100, times = 2),
+#'   stat = 1:200,
+#'   var = 0.05,
+#'   weight = rep(1:100 / sum(1:100), times = 2)
+#' )
+#' dt_2 <- directadjusting::bootstrap_confidence_intervals(
+#'   stats_dt = stats_dt_2,
+#'   stat_col_nms = "stat",
+#'   stratum_col_nms = "sex",
+#'   conf_lvls = 0.95,
+#'   adjust_weight_col_nm = "weight"
+#' )
+#' stopifnot(
+#'   c("stat", "stat_lo", "stat_hi") %in% names(dt_1),
+#'   nrow(dt_1) == 1,
+#'   c("stat", "stat_lo", "stat_hi") %in% names(dt_2),
+#'   nrow(dt_2) == 2
+#' )
 bootstrap_confidence_intervals <- function(
   stats_dt,
   stat_col_nms,
-  stratum_col_nms,
-  conf_lvls,
+  stratum_col_nms = NULL,
+  conf_lvls = 0.95,
   adjust_weight_col_nm = "weight",
   boot_arg_list = list(R = 1000),
   boot_ci_arg_list = list(type = "perc")
 ) {
   stopifnot(
+    #' @param stats_dt `[data.frame, data.table]` (no default)
+    #'
+    #' `data.frame` / `data.table` containing columns specified by other
+    #' arguments.
     is.data.frame(stats_dt),
-    c(stat_col_nms, stratum_col_nms, adjust_weight_col_nm) %in% names(stats_dt),
+
+    #' @param stat_col_nms `[character]` (no default)
+    #'
+    #' Names of columns containing statistics in `stats_dt`.
+    length(stat_col_nms) >= 1,
+    stat_col_nms %in% names(stats_dt),
+
+    #' @param stratum_col_nms `[NULL, character]` (default `NULL`)
+    #'
+    #' Names of columns in `stats_dt` which stratify statistics. E.g. `"sex"`.
+    #'
+    #' - `NULL`: No stratifying columns will be included in output.
+    #' - `character`: These stratifying columns will be included in output.
+    is.null(stratum_col_nms) || stratum_col_nms %in% names(stats_dt)
+  )
+  n_strata <- 1L
+  if (!is.null(stratum_col_nms)) {
+    n_strata <- data.table::uniqueN(stats_dt, by = stratum_col_nms)
+  }
+  stopifnot(
+    #' @param conf_lvls `[numeric]` (default `0.95`)
+    #'
+    #' One or more confidence levels for the statistics. Length must be either
+    #' one, which leads to using the same level for all strata, or must be
+    #' equal to the number of strata in `stats_dt` as defined via
+    #' `stratum_col_nms`. Must be `0 < conf_lvls < 1`.
+    length(conf_lvls) %in% c(1L, n_strata),
+    conf_lvls > 0.0,
+    conf_lvls < 1.0,
+
+    #' @param adjust_weight_col_nm `[character]` (default `"weight"`)
+    #'
+    #' Name of column in `stats_dt` which contains the standardisation weight.
+    #' All weights must be >= 0.
+    length(adjust_weight_col_nm) == 1,
+    adjust_weight_col_nm %in% names(stats_dt),
+    is.numeric(stats_dt[[adjust_weight_col_nm]]),
+    !is.na(stats_dt[[adjust_weight_col_nm]]),
+    stats_dt[[adjust_weight_col_nm]] >= 0,
+
+    #' @param boot_arg_list `[list]` (default `list(R = 1000)`)
+    #'
+    #' Arguments passed to `[boot::boot]`.
     inherits(boot_arg_list, "list"),
+    #' @param boot_ci_arg_list `[list]` (default `list(type = "perc")`)
+    #'
+    #' Arguments passed to `[boot::boot.ci]`.
     inherits(boot_ci_arg_list, "list")
   )
 
   # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
   # `directadjusting::bootstrap_confidence_intervals` can be used to
-  # compute confidence intervals using the bootstrap. The following steps are
-  # performed:
+  # compute confidence intervals using the bootstrap. However, before using this
+  # functionality, understand that bootstrapping needs data to work. In the case
+  # of computing weighted averages there should be sufficient number of
+  # adjusting strata within each requested output strata for sensible results.
+  # E.g. with a `stats_dt` stratified by two sexes and 100 age groups and
+  # with `stratum_col_nms = "sex"` there should be enough adjusting strata.
+  # The same cannot be said if one were to adjust by sex within each age group.
   #
-  # - Collect a `data.table` containing the (non-duplicated) strata in
-  #   `stats_dt` by `stratum_col_nms`.
+  # `directadjusting::bootstrap_confidence_intervals` performs the following
+  # steps:
+  #
+  # - Create a `data.table` with one row per stratum as defined via
+  #   `stratum_col_nms`.
   # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
-  out <- subset(
-    stats_dt,
-    subset = !duplicated(stats_dt, by = stratum_col_nms),
-    select = stratum_col_nms
-  )
-  data.table::setkeyv(out, stratum_col_nms)
-  this_call <- match.call()
-  ci_list <- lapply(seq_along(stat_col_nms), function(i) {
+  if (!is.null(stratum_col_nms)) {
+    out <- subset(
+      stats_dt,
+      subset = !duplicated(stats_dt, by = stratum_col_nms),
+      select = stratum_col_nms
+    )
+    data.table::setkeyv(out, stratum_col_nms)
+  } else {
+    out <- data.table::data.table(
+      stat = NA_integer_
+    )
+    data.table::setnames(out, "stat", stat_col_nms[1])
+  }
+  lapply(seq_along(stat_col_nms), function(i) {
     # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
     # - For each `stat_col_nms` element:
     #   + Set `boot_arg_list` elements `statistic`, `stype = "w"` and
@@ -221,50 +319,28 @@ bootstrap_confidence_intervals <- function(
     boot_arg_list[["stype"]] <- "w"
     boot_ci_arg_list[["conf"]] <- conf_lvls[i]
     stat_ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
-    stratum_value_counts <- stats_dt[
-      #' @importFrom data.table .SD
-      j = list(n = data.table::uniqueN(.SD)),
-      .SDcols = stat_col_nm,
+    # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
+    #   + Set `boot_arg_list[["data"]]` and
+    #     `boot_ci_arg_list[["boot.out"]]` internally.
+    #   + Call `boot::boot` and `boot::boot.ci` within each stratum.
+    # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
+    ci_dt <- stats_dt[
+      j = {
+        #' @importFrom data.table .SD
+        .__DT <- .SD
+        boot_arg_list[["data"]] <- quote(.__DT)
+        b <- do.call(boot::boot, boot_arg_list)
+        est <- b[["t0"]]
+        boot_ci_arg_list[["boot.out"]] <- quote(b)
+        ci <- do.call(boot::boot.ci, boot_ci_arg_list)
+        ci_list <- as.list(ci[["percent"]][4:5])
+        names(ci_list) <- stat_ci_col_nms
+        out <- c(list(est = est), ci_list)
+        names(out)[1] <- stat_col_nm
+        out
+      },
       keyby = eval(stratum_col_nms)
     ]
-    if (any(stratum_value_counts[["n"]] == 1)) {
-      warning(simpleWarning(
-        paste0(
-          "some strata had only one unique value of statistic ",
-          deparse(stat_col_nm), " so bootstrapping was not possible; ",
-          "returning NA confidence intervals in such cases"
-        ),
-        call = this_call
-      ))
-    }
-    strata_with_variance <- stats_dt[
-      i = stratum_value_counts[stratum_value_counts[["n"]] > 1, ],
-      on = eval(stratum_col_nms),
-    ]
-    if (nrow(strata_with_variance) > 0) {
-      # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
-      #   + Set `boot_arg_list[["data"]]` and
-      #     `boot_ci_arg_list[["boot.out"]]` internally.
-      #   + Call `boot::boot` and `boot::boot.ci` within each stratum.
-      # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
-      ci_dt <- strata_with_variance[
-        j = {
-          #' @importFrom data.table .SD
-          .__DT <- .SD
-          boot_arg_list[["data"]] <- quote(.__DT)
-          b <- do.call(boot::boot, boot_arg_list)
-          est <- b[["t0"]]
-          boot_ci_arg_list[["boot.out"]] <- quote(b)
-          ci <- do.call(boot::boot.ci, boot_ci_arg_list)
-          ci_list <- as.list(ci[["percent"]][4:5])
-          names(ci_list) <- stat_ci_col_nms
-          out <- c(list(est = est), ci_list)
-          names(out)[1] <- stat_col_nm
-          out
-        },
-        keyby = eval(stratum_col_nms)
-      ]
-    }
 
     # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
     #   + Add the resulting confidence intervals into the output `data.table`.
@@ -272,18 +348,12 @@ bootstrap_confidence_intervals <- function(
     data.table::set(
       x = out,
       j = c(stat_col_nm, stat_ci_col_nms),
-      value = ci_dt[
-        i = out,
-        on = stratum_col_nms,
-        #' @importFrom data.table .SD
-        j = .SD,
-        .SDcols = c(stat_col_nm, stat_ci_col_nms)
-      ]
+      value = as.list(ci_dt)[c(stat_col_nm, stat_ci_col_nms)]
     )
     NULL
   })
   # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
-  # - Returns a `data.table` with columns `stratum_col_nms` and for each `i`
+  # - Returns a `data.table` with columns `stratum_col_nms` and for each `i`,
   #   `stat_col_nms[i]`, `paste0(stat_col_nms[i], "_lo")`, and
   #   `paste0(stat_col_nms[i], "_hi")`.
   # @codedoc_comment_block directadjusting::bootstrap_confidence_intervals
