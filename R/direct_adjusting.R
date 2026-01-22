@@ -30,15 +30,15 @@
 #' values other than between `(0, 1)` cause an error
 #' @param conf_methods `[character]` (default `"identity"`)
 #'
-#' method to compute confidence intervals; either one string (to be used for
+#' Method to compute confidence intervals. Either one string (to be used for
 #' all statistics) or a vector of strings, one for each element of
-#' `stat_col_nms`; see \code{\link{delta_method_confidence_intervals}} for
-#' supported delta method confidence intervals; other allowed values:
+#' `stat_col_nms`. See `[delta_method_confidence_intervals]` for
+#' supported delta method confidence intervals. Other options:
 #'
 #' - `"none"`: for statistics for which you do not want
-#'    confidence intervals to be calculated (or `NA` in `var_col_nms`)
-#' - `"boot"`: bootstrapped confidence intervals --- see args `boot_arg_list`,
-#'   `boot_ci_arg_list` and section **Bootstrap**
+#'    confidence intervals to be calculated
+#' - `"boot"`: bootstrapped confidence intervals --- see
+#'   `[bootstrap_confidence_intervals]`.
 #' @param stratum_col_nms `[NULL, character]` (default `NULL`)
 #'
 #' names of columns in `stats_dt` by which statistics are stratified (and they
@@ -53,12 +53,10 @@
 #' @template weights_arg
 #' @param boot_arg_list `[list]` (default `list(R = 1000)`)
 #'
-#' arguments passed to \code{\link[boot]{boot}} with `data`, `statistic`, and
-#' `stype` overridden internally
+#' See `[bootstrap_confidence_intervals]`.
 #' @param boot_ci_arg_list `[list]` (default `list(type = "perc")`)
 #'
-#' arguments passed to \code{\link[boot]{boot.ci}} with `boot.out` and `conf`
-#' overridden internally (latter comes from `conf_levels`)
+#' See `[bootstrap_confidence_intervals]`.
 #' @section Weights:
 #'
 #' The weights are scaled internally to sum to one, but they need to be positive
@@ -67,29 +65,6 @@
 #' two hierarchical variables, one used for adjusting and one for stratifying
 #' output (such as 18 age groups of 5 years for adjusting and 4 larger age
 #' groups for stratifying output). See **Examples**.
-#'
-#' @section Tabulation:
-#'
-#' Currently every pair of columns in `union(stratum_col_nms, adjust_col_nms)`
-#' must be either
-#'
-#' - hierarchical: each level of B exists under exactly one level of A (or
-#'   converse); e.g. regions `c(1, 1, 2, 2)` and sub-regions `c(1, 2, 3, 4)`;
-#'   sub-regions `c(1, 2, 2, 3)` would not be hierarchical
-#' - cross-joined: every level of B is repeated for every level of A; e.g.
-#'   sexes `c(1, 1, 2, 2)` and regions `c(1, 2, 1, 2)`;
-#'   regions `c(1, 2, 2, 3)` would not be cross-joined
-#'
-#' This ensures that adjusting will be performed properly, i.e. the weights
-#' are merged and used as intended.
-#'
-#' @section Bootstrap:
-#'
-#' Confidence intervals can be approximated using bootstrap.
-#' \code{\link[boot]{boot.ci}} is called with `stype = "w"`, i.e. the
-#' bootstrap is based on random sampling of weights within each stratum
-#' defined by `stratum_col_nms` for each stratification defined by
-#' `adjust_col_nms`. You have to know whether this is appropriate or not.
 #'
 #' @examples
 #'

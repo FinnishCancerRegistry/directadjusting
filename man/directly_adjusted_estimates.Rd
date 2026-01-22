@@ -61,15 +61,15 @@ values other than between \verb{(0, 1)} cause an error}
 
 \item{conf_methods}{\verb{[character]} (default \code{"identity"})
 
-method to compute confidence intervals; either one string (to be used for
+Method to compute confidence intervals. Either one string (to be used for
 all statistics) or a vector of strings, one for each element of
-\code{stat_col_nms}; see \code{\link{delta_method_confidence_intervals}} for
-supported delta method confidence intervals; other allowed values:
+\code{stat_col_nms}. See \verb{[delta_method_confidence_intervals]} for
+supported delta method confidence intervals. Other options:
 \itemize{
 \item \code{"none"}: for statistics for which you do not want
-confidence intervals to be calculated (or \code{NA} in \code{var_col_nms})
-\item \code{"boot"}: bootstrapped confidence intervals --- see args \code{boot_arg_list},
-\code{boot_ci_arg_list} and section \strong{Bootstrap}
+confidence intervals to be calculated
+\item \code{"boot"}: bootstrapped confidence intervals --- see
+\verb{[bootstrap_confidence_intervals]}.
 }}
 
 \item{weights}{\verb{[double, data.table, character]}
@@ -90,13 +90,11 @@ this is only allowed when you are adjusting by exactly one variable
 
 \item{boot_arg_list}{\verb{[list]} (default \code{list(R = 1000)})
 
-arguments passed to \code{\link[boot]{boot}} with \code{data}, \code{statistic}, and
-\code{stype} overridden internally}
+See \verb{[bootstrap_confidence_intervals]}.}
 
 \item{boot_ci_arg_list}{\verb{[list]} (default \code{list(type = "perc")})
 
-arguments passed to \code{\link[boot]{boot.ci}} with \code{boot.out} and \code{conf}
-overridden internally (latter comes from \code{conf_levels})}
+See \verb{[bootstrap_confidence_intervals]}.}
 }
 \description{
 Compute direct adjusted estimates from a table of statistics.
@@ -110,34 +108,6 @@ combination of \code{stratum_col_nms} columns. This allows you to have e.g.
 two hierarchical variables, one used for adjusting and one for stratifying
 output (such as 18 age groups of 5 years for adjusting and 4 larger age
 groups for stratifying output). See \strong{Examples}.
-}
-
-\section{Tabulation}{
-
-
-Currently every pair of columns in \code{union(stratum_col_nms, adjust_col_nms)}
-must be either
-\itemize{
-\item hierarchical: each level of B exists under exactly one level of A (or
-converse); e.g. regions \code{c(1, 1, 2, 2)} and sub-regions \code{c(1, 2, 3, 4)};
-sub-regions \code{c(1, 2, 2, 3)} would not be hierarchical
-\item cross-joined: every level of B is repeated for every level of A; e.g.
-sexes \code{c(1, 1, 2, 2)} and regions \code{c(1, 2, 1, 2)};
-regions \code{c(1, 2, 2, 3)} would not be cross-joined
-}
-
-This ensures that adjusting will be performed properly, i.e. the weights
-are merged and used as intended.
-}
-
-\section{Bootstrap}{
-
-
-Confidence intervals can be approximated using bootstrap.
-\code{\link[boot]{boot.ci}} is called with \code{stype = "w"}, i.e. the
-bootstrap is based on random sampling of weights within each stratum
-defined by \code{stratum_col_nms} for each stratification defined by
-\code{adjust_col_nms}. You have to know whether this is appropriate or not.
 }
 
 \examples{
