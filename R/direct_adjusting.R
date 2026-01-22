@@ -210,7 +210,7 @@ directly_adjusted_estimates <- function(
   var_col_nms = NULL,
   stratum_col_nms = NULL,
   adjust_col_nms = NULL,
-  conf_lvls = 0.05,
+  conf_lvls = 0.95,
   conf_methods = "identity",
   weights = NULL,
   boot_arg_list = list(R = 1000),
