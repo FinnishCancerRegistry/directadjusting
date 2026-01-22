@@ -435,7 +435,7 @@ directly_adjusted_estimates <- function(
   }
 
   ordered_stat_col_nms <- unlist(lapply(
-    seq_len(length(stat_col_nms)),
+    seq_along(stat_col_nms),
     function(i) {
       stat_col_nm <- stat_col_nms[i]
       var_col_nm <- var_col_nms[i]
