@@ -93,4 +93,8 @@ Remove deprecated \code{directadjusting::direct_adjusted_estimates}. Use
 }
 }
 
+\author{
+\strong{Maintainer}: Joonas Miettinen \email{joonas.miettinen@cancer.fi} (\href{https://orcid.org/0000-0001-8624-6754}{ORCID})
+
+}
 \keyword{internal}

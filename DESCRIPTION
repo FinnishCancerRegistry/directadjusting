@@ -2,8 +2,13 @@ Type: Package
 Package: directadjusting
 Title: Directly Adjusted Estimates
 Version: 0.4.0
-Author: Joonas Miettinen <joonas.miettinen@cancer.fi>
-Maintainer: Joonas Miettinen <joonas.miettinen@cancer.fi>
+Authors@R: person(
+        given = "Joonas",
+        family = "Miettinen",
+        email = "joonas.miettinen@cancer.fi",
+        role = c("cre", "aut"),
+        comment = c(ORCID = "0000-0001-8624-6754")
+    )
 Description: Compute estimates and confidence intervals of weighted
     averages quickly and easily.
 License: MIT + file LICENSE
@@ -17,3 +22,6 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+Config/Needs/development:
+    codedoc (GitHub: FinnishCancerRegistry/codedoc)
+    revdepcheck (GitHub: r-lib/revdepcheck)
