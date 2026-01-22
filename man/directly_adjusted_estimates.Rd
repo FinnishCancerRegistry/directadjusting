@@ -7,14 +7,12 @@
 directly_adjusted_estimates(
   stats_dt,
   stat_col_nms,
-  var_col_nms = NULL,
+  var_col_nms,
   stratum_col_nms = NULL,
   adjust_col_nms = NULL,
   conf_lvls = 0.95,
   conf_methods = "identity",
-  weights = NULL,
-  boot_arg_list = list(R = 1000),
-  boot_ci_arg_list = list(type = "perc")
+  weights = NULL
 )
 }
 \arguments{
@@ -66,10 +64,8 @@ all statistics) or a vector of strings, one for each element of
 \code{stat_col_nms}. See \verb{[delta_method_confidence_intervals]} for
 supported delta method confidence intervals. Other options:
 \itemize{
-\item \code{"none"}: for statistics for which you do not want
-confidence intervals to be calculated
-\item \code{"boot"}: bootstrapped confidence intervals --- see
-\verb{[bootstrap_confidence_intervals]}.
+\item \code{"none"}: This causes no confidence intervals to be calculated for the
+respective \code{stat_col_nms} element(s).
 }}
 
 \item{weights}{\verb{[double, data.table, character]}
@@ -87,14 +83,6 @@ variables that are used to adjust estimates, and one column named
 into this package; see \code{\link{integrated_weight_schemas}}; again
 this is only allowed when you are adjusting by exactly one variable
 }}
-
-\item{boot_arg_list}{\verb{[list]} (default \code{list(R = 1000)})
-
-See \verb{[bootstrap_confidence_intervals]}.}
-
-\item{boot_ci_arg_list}{\verb{[list]} (default \code{list(type = "perc")})
-
-See \verb{[bootstrap_confidence_intervals]}.}
 }
 \description{
 Compute direct adjusted estimates from a table of statistics.
@@ -138,18 +126,6 @@ my_adj_stats <- directly_adjusted_estimates(
   var_col_nms = "v",
   conf_lvls = 0.95,
   conf_methods = "log",
-  stratum_col_nms = "sex",
-  adjust_col_nms = "ag",
-  weights = c(200, 300, 400, 100)
-)
-
-# adjusted by age group, bootstrapped CIs
-my_adj_stats <- directly_adjusted_estimates(
-  stats_dt = my_stats,
-  stat_col_nms = "e",
-  var_col_nms = "v",
-  conf_lvls = 0.95,
-  conf_methods = "boot",
   stratum_col_nms = "sex",
   adjust_col_nms = "ag",
   weights = c(200, 300, 400, 100)
@@ -200,7 +176,7 @@ if (requireNamespace("survival", quietly = TRUE)) {
 }
 
 # with no adjusting columns defined you get the same table as input
-# but with confidence intervals if you want them. this for the sake of
+# but with confidence intervals. this for the sake of
 # convenience for programming cases where sometimes you want to adjust,
 # sometimes not.
 stats_dt_2 <- data.table::data.table(

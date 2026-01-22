@@ -3,7 +3,6 @@
 \name{confidence_intervals}
 \alias{confidence_intervals}
 \alias{delta_method_confidence_intervals}
-\alias{bootstrap_confidence_intervals}
 \title{Confidence Intervals}
 \usage{
 delta_method_confidence_intervals(
@@ -11,16 +10,6 @@ delta_method_confidence_intervals(
   variances,
   conf_lvl = 0.95,
   conf_method = "identity"
-)
-
-bootstrap_confidence_intervals(
-  stats_dt,
-  stat_col_nms,
-  stratum_col_nms = NULL,
-  conf_lvls = 0.95,
-  adjust_weight_col_nm = "weight",
-  boot_arg_list = list(R = 1000),
-  boot_ci_arg_list = list(type = "perc")
 )
 }
 \arguments{
@@ -39,42 +28,6 @@ Confidence level of confidence intervals in `]0, 1[`.}
 \item{conf_method}{`[character]` (default `"identity"`)
 
 See **Details**.}
-
-\item{stats_dt}{`[data.frame, data.table]` (no default)
-
-`data.frame` / `data.table` containing columns specified by other
-arguments.}
-
-\item{stat_col_nms}{`[character]` (no default)
-
-Names of columns containing statistics in `stats_dt`. These columns must
-by numeric and must not contain missing values.}
-
-\item{stratum_col_nms}{`[NULL, character]` (default `NULL`)
-
-Names of columns in `stats_dt` which stratify statistics. E.g. `"sex"`.
-
-- `NULL`: No stratifying columns will be included in output.
-- `character`: These stratifying columns will be included in output.}
-
-\item{conf_lvls}{`[numeric]` (default `0.95`)
-
-One or more confidence levels for the statistics. Length must be either
-one, which leads to using the same level everywhere, or must be
-equal to `length(stat_col_nms)`.}
-
-\item{adjust_weight_col_nm}{`[character]` (default `"weight"`)
-
-Name of column in `stats_dt` which contains the standardisation weight.
-All weights must be >= 0.}
-
-\item{boot_arg_list}{`[list]` (default `list(R = 1000)`)
-
-Arguments passed to `[boot::boot]`.}
-
-\item{boot_ci_arg_list}{`[list]` (default `list(type = "perc")`)
-
-Arguments passed to `[boot::boot.ci]`.}
 }
 \description{
 Functions to compute confidence intervals.
@@ -109,37 +62,6 @@ are performed:
   `variance`.
 - Return `data.table` with columns
   `c("statistic", "variance", "ci_lo", "ci_hi")`.
-
-
-**directadjusting::bootstrap_confidence_intervals**
-
-`directadjusting::bootstrap_confidence_intervals` can be used to
-compute confidence intervals using the bootstrap. However, before using this
-functionality, understand that bootstrapping needs data to work. In the case
-of computing weighted averages there should be sufficient number of
-adjusting strata within each requested output strata for sensible results.
-E.g. with a `stats_dt` stratified by two sexes and 100 age groups and
-with `stratum_col_nms = "sex"` there should be enough adjusting strata.
-The same cannot be said if one were to adjust by sex within each age group.
-
-`directadjusting::bootstrap_confidence_intervals` performs the following
-steps:
-
-- Create a `data.table` with one row per stratum as defined via
-  `stratum_col_nms`.
-- For each `stat_col_nms` element:
-  + Set `boot_arg_list` elements `statistic`, `stype = "w"` and
-    `boot_ci_arg_list[["conf"]] <- conf_lvls[i]` internally.
-    `statistic` is a function which multiplies `adjust_weight_col_nm` with
-    the bootstrap weight and returns the weighted average of the statistic
-    in question.
-  + Set `boot_arg_list[["data"]]` and
-    `boot_ci_arg_list[["boot.out"]]` internally.
-  + Call `boot::boot` and `boot::boot.ci` within each stratum.
-  + Add the resulting confidence intervals into the output `data.table`.
-- Returns a `data.table` with columns `stratum_col_nms` and for each `i`,
-  `stat_col_nms[i]`, `paste0(stat_col_nms[i], "_lo")`, and
-  `paste0(stat_col_nms[i], "_hi")`.
 }
 
 \examples{
@@ -160,39 +82,5 @@ dt_2 <- directadjusting::delta_method_confidence_intervals(
 )
 stopifnot(
   all.equal(dt_1, dt_2, check.attributes = FALSE)
-)
-
-# directadjusting::bootstrap_confidence_intervals
-stats_dt_1 <- data.table::data.table(
-  stat = 1:20,
-  var = 0.05,
-  weight = 1:20 / sum(1:20)
-)
-dt_1 <- directadjusting::bootstrap_confidence_intervals(
-  stats_dt = stats_dt_1,
-  stat_col_nms = "stat",
-  stratum_col_nms = NULL,
-  conf_lvls = 0.95,
-  adjust_weight_col_nm = "weight"
-)
-stats_dt_2 <- data.table::data.table(
-  sex = rep(0:1, each = 100),
-  ag = rep(1:100, times = 2),
-  stat = 1:200,
-  var = 0.05,
-  weight = rep(1:100 / sum(1:100), times = 2)
-)
-dt_2 <- directadjusting::bootstrap_confidence_intervals(
-  stats_dt = stats_dt_2,
-  stat_col_nms = "stat",
-  stratum_col_nms = "sex",
-  conf_lvls = 0.95,
-  adjust_weight_col_nm = "weight"
-)
-stopifnot(
-  c("stat", "stat_lo", "stat_hi") \%in\% names(dt_1),
-  nrow(dt_1) == 1,
-  c("stat", "stat_lo", "stat_hi") \%in\% names(dt_2),
-  nrow(dt_2) == 2
 )
 }

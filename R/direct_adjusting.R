@@ -35,10 +35,8 @@
 #' `stat_col_nms`. See `[delta_method_confidence_intervals]` for
 #' supported delta method confidence intervals. Other options:
 #'
-#' - `"none"`: for statistics for which you do not want
-#'    confidence intervals to be calculated
-#' - `"boot"`: bootstrapped confidence intervals --- see
-#'   `[bootstrap_confidence_intervals]`.
+#' - `"none"`: This causes no confidence intervals to be calculated for the
+#'   respective `stat_col_nms` element(s).
 #' @param stratum_col_nms `[NULL, character]` (default `NULL`)
 #'
 #' names of columns in `stats_dt` by which statistics are stratified (and they
@@ -51,12 +49,6 @@
 #' - `NULL`: No adjusting is performed.
 #' - `character`: Adjust by these columns.
 #' @template weights_arg
-#' @param boot_arg_list `[list]` (default `list(R = 1000)`)
-#'
-#' See `[bootstrap_confidence_intervals]`.
-#' @param boot_ci_arg_list `[list]` (default `list(type = "perc")`)
-#'
-#' See `[bootstrap_confidence_intervals]`.
 #' @section Weights:
 #'
 #' The weights are scaled internally to sum to one, but they need to be positive
@@ -94,18 +86,6 @@
 #'   var_col_nms = "v",
 #'   conf_lvls = 0.95,
 #'   conf_methods = "log",
-#'   stratum_col_nms = "sex",
-#'   adjust_col_nms = "ag",
-#'   weights = c(200, 300, 400, 100)
-#' )
-#'
-#' # adjusted by age group, bootstrapped CIs
-#' my_adj_stats <- directly_adjusted_estimates(
-#'   stats_dt = my_stats,
-#'   stat_col_nms = "e",
-#'   var_col_nms = "v",
-#'   conf_lvls = 0.95,
-#'   conf_methods = "boot",
 #'   stratum_col_nms = "sex",
 #'   adjust_col_nms = "ag",
 #'   weights = c(200, 300, 400, 100)
@@ -178,40 +158,21 @@
 #'   dt_2[["sex"]] == stats_dt_2[["sex"]]
 #' )
 #'
-#' # both boostrap and delta method confidence intervals in the same call
-#' stats_dt_3 <- data.table::data.table(
-#'   sex = rep(0:1, each = 100),
-#'   ag = rep(1:100, times = 2),
-#'   e1 = 0.0,
-#'   v1 = 0.1,
-#'   e2 = 0.0
-#' )
-#' dt_3 <- directadjusting::directly_adjusted_estimates(
-#'   stats_dt = stats_dt_3,
-#'   stat_col_nms = c("e1", "e2"),
-#'   var_col_nms = c("v1", NA),
-#'   adjust_col_nms = "ag",
-#'   conf_lvls = 0.95,
-#'   conf_methods = c("identity", "boot"),
-#'   stratum_col_nms = "sex"
-#' )
-#' stopifnot(
-#'   nrow(dt_3) == 2
-#' )
-#'
 #' @export
 directly_adjusted_estimates <- function(
   stats_dt,
   stat_col_nms,
-  var_col_nms = NULL,
+  var_col_nms,
   stratum_col_nms = NULL,
   adjust_col_nms = NULL,
   conf_lvls = 0.95,
   conf_methods = "identity",
-  weights = NULL,
-  boot_arg_list = list(R = 1000),
-  boot_ci_arg_list = list(type = "perc")
+  weights = NULL
 ) {
+  # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2026-01-22", "0.5.0")
+  # `directadjusting::direct_adjusted_estimates` option `conf_methods = "boot"`
+  # removed. Only delta method confidence intervals now possible.
+  # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2026-01-22", "0.5.0")
   # assertions -----------------------------------------------------------------
   stopifnot(
     is.data.frame(stats_dt),
@@ -221,9 +182,7 @@ directly_adjusted_estimates <- function(
     var_col_nms %in% c(names(stats_dt), NA),
     data.table::between(conf_lvls, lower = 0.0, upper = 1.0, incbounds = FALSE),
     length(conf_lvls) %in% c(1L, length(stat_col_nms)),
-    length(conf_methods) %in% c(1L, length(stat_col_nms)),
-    inherits(boot_arg_list, "list"),
-    inherits(boot_ci_arg_list, "list")
+    length(conf_methods) %in% c(1L, length(stat_col_nms))
   )
   if (!is.null(var_col_nms)) {
     lapply(setdiff(var_col_nms, NA_character_), function(var_col_nm) {
@@ -301,7 +260,7 @@ directly_adjusted_estimates <- function(
   )
   tmp_w_col_nm <- attr(work_dt, "tmp_w_col_nm")
 
-  # bootstrapped confidence intervals ------------------------------------------
+  # prep output ----------------------------------------------------------------
   if (!is.null(stratum_col_nms)) {
     out <- subset(
       work_dt,
@@ -314,88 +273,66 @@ directly_adjusted_estimates <- function(
     )
     data.table::setnames(out, "stat", stat_col_nms[1])
   }
-  wh_boot_ci <- which(conf_methods == "boot")
-  wh_nonboot_ci <- setdiff(seq_along(conf_methods), wh_boot_ci)
-  if (length(wh_boot_ci)) {
-    local({
-      boot_stats_dt <- bootstrap_confidence_intervals(
-        stats_dt = work_dt,
-        stat_col_nms = stat_col_nms[wh_boot_ci],
-        stratum_col_nms = stratum_col_nms,
-        conf_lvls = conf_lvls[wh_boot_ci],
-        adjust_weight_col_nm = tmp_w_col_nm,
-        boot_arg_list = boot_arg_list,
-        boot_ci_arg_list = boot_ci_arg_list
-      )
-      data.table::set(
-        x = out,
-        j = names(boot_stats_dt),
-        value = boot_stats_dt
-      )
-    })
-  }
 
   # delta method confidence intervals ------------------------------------------
-  if (length(wh_nonboot_ci) > 0) {
-    local({
-      data.table::set(
-        work_dt,
-        j = stat_col_nms,
-        value = lapply(stat_col_nms, function(col_nm) {
-          work_dt[[col_nm]] * work_dt[[tmp_w_col_nm]]
-        })
+  local({
+    data.table::set(
+      work_dt,
+      j = stat_col_nms,
+      value = lapply(stat_col_nms, function(col_nm) {
+        work_dt[[col_nm]] * work_dt[[tmp_w_col_nm]]
+      })
+    )
+    data.table::set(
+      x = work_dt,
+      j = var_col_nms,
+      value = lapply(var_col_nms, function(vcn) {
+        work_dt[[vcn]] * (work_dt[[tmp_w_col_nm]] ^ 2)
+      })
+    )
+    adjusted_stats_dt <- work_dt[
+      #' @importFrom data.table .SD
+      j = lapply(.SD, sum),
+      .SDcols = c(stat_col_nms, var_col_nms),
+      keyby = eval(stratum_col_nms)
+    ]
+    data.table::set(
+      x = out,
+      j = c(stat_col_nms, var_col_nms),
+      value = lapply(
+        c(stat_col_nms, var_col_nms),
+        function(col_nm) {
+          adjusted_stats_dt[[col_nm]]
+        }
       )
-      data.table::set(
-        x = work_dt,
-        j = var_col_nms[wh_nonboot_ci],
-        value = lapply(var_col_nms[wh_nonboot_ci], function(vcn) {
-          work_dt[[vcn]] * (work_dt[[tmp_w_col_nm]] ^ 2)
-        })
+    )
+
+    lapply(seq_along(stat_col_nms), function(i) {
+      stat_col_nm <- stat_col_nms[i]
+      var_col_nm <- var_col_nms[i]
+      conf_lvl <- conf_lvls[i]
+      conf_method <- conf_methods[i]
+      if (conf_method == "none") {
+        return(NULL)
+      }
+      ci_dt <- delta_method_confidence_intervals(
+        statistics = adjusted_stats_dt[[stat_col_nm]],
+        variances = adjusted_stats_dt[[var_col_nm]],
+        conf_lvl = conf_lvl,
+        conf_method = conf_method
       )
-      nonboot_stats_dt <- work_dt[
-        #' @importFrom data.table .SD
-        j = lapply(.SD, sum),
-        .SDcols = c(stat_col_nms[wh_nonboot_ci], var_col_nms[wh_nonboot_ci]),
-        keyby = eval(stratum_col_nms)
-      ]
+
+      ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
       data.table::set(
         x = out,
-        j = c(stat_col_nms[wh_nonboot_ci], var_col_nms[wh_nonboot_ci]),
-        value = lapply(
-          c(stat_col_nms[wh_nonboot_ci], var_col_nms[wh_nonboot_ci]),
-          function(col_nm) {
-            nonboot_stats_dt[[col_nm]]
-          }
-        )
+        j = ci_col_nms,
+        value = lapply(c("ci_lo", "ci_hi"), function(col_nm) {
+          ci_dt[[col_nm]]
+        })
       )
-
-      lapply(wh_nonboot_ci, function(i) {
-        stat_col_nm <- stat_col_nms[i]
-        var_col_nm <- var_col_nms[i]
-        conf_lvl <- conf_lvls[i]
-        conf_method <- conf_methods[i]
-        if (is.na(var_col_nm) || conf_method == "none") {
-          return(NULL)
-        }
-        ci_dt <- delta_method_confidence_intervals(
-          statistics = nonboot_stats_dt[[stat_col_nm]],
-          variances = nonboot_stats_dt[[var_col_nm]],
-          conf_lvl = conf_lvl,
-          conf_method = conf_method
-        )
-
-        ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
-        data.table::set(
-          x = out,
-          j = ci_col_nms,
-          value = lapply(c("ci_lo", "ci_hi"), function(col_nm) {
-            ci_dt[[col_nm]]
-          })
-        )
-        NULL
-      })
+      NULL
     })
-  }
+  })
 
 
   # final touches --------------------------------------------------------------
@@ -423,7 +360,8 @@ directly_adjusted_estimates <- function(
   }
   call <- match.call()
   data.table::setattr(
-    out, "direct_adjusting_meta",
+    out,
+    "direct_adjusting_meta",
     mget(c("call", "stat_col_nms", "var_col_nms", "stratum_col_nms",
            "adjust_col_nms", "conf_lvls", "conf_methods"))
   )

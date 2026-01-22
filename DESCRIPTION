@@ -7,13 +7,11 @@ Maintainer: Joonas Miettinen <joonas.miettinen@cancer.fi>
 Description: Compute estimates and confidence intervals of weighted
     averages quickly and easily.
 License: MIT + file LICENSE
-Depends: 
+Depends:
     R (>= 2.10)
-Imports: 
-    boot,
-    data.table,
-    utils
-Suggests: 
+Imports:
+    data.table
+Suggests:
     survival
 Encoding: UTF-8
 LazyData: true

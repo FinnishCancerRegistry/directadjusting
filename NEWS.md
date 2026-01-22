@@ -4,6 +4,11 @@
 
 ### directadjusting::direct_adjusted_estimates
 
+`directadjusting::direct_adjusted_estimates` option `conf_methods = "boot"`
+removed. Only delta method confidence intervals now possible.
+
+### directadjusting::direct_adjusted_estimates
+
 `directadjusting::direct_adjusted_estimates` now allows for the sake of
 convenience to be called with no `adjust_col_nms` defined. This results
 in no adjusting.
