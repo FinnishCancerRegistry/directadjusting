@@ -311,7 +311,7 @@ directly_adjusted_estimates <- function(
     # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2025-11-25", "0.5.0")
     # `directadjusting::direct_adjusted_estimates` now allows for the sake of
     # convenience to be called with no `adjust_col_nms` defined. This results
-    # in no adjusting and confidence interval if you want them.
+    # in no adjusting.
     # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2025-11-25", "0.5.0")
     adjust_col_nms <- tmp_nms(
       prefixes = "tmp_adjust_stratum_",

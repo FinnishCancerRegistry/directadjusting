@@ -6,7 +6,7 @@
 
 `directadjusting::direct_adjusted_estimates` now allows for the sake of
 convenience to be called with no `adjust_col_nms` defined. This results
-in no adjusting and confidence interval if you want them.
+in no adjusting.
 
 
 ## News for version 0.4.0
