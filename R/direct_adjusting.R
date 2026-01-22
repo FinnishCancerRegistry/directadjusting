@@ -269,39 +269,6 @@ directly_adjusted_estimates <- function(
     on.exit(work_dt[, (tmp_stratum_col_nm) := NULL])
     work_dt[, (tmp_stratum_col_nm) := NA]
   }
-  test_col_nms <- setdiff(
-    union(stratum_col_nms, adjust_col_nms),
-    tmp_stratum_col_nm
-  )
-  call <- match.call()
-  if (length(test_col_nms) > 1) {
-    stratum_col_nm_pairs <- utils::combn(test_col_nms, m = 2L)
-    lapply(seq_len(ncol(stratum_col_nm_pairs)), function(pair_no) {
-      pair <- stratum_col_nm_pairs[, pair_no]
-      udt <- unique(work_dt, by = pair)
-
-      un1 <- data.table::uniqueN(udt[[pair[1]]])
-      un2 <- data.table::uniqueN(udt[[pair[2]]])
-      is_cj <- nrow(udt) == un1 * un2
-      if (is_cj) {
-        return(NULL)
-      }
-
-      is_hierachical <- nrow(udt) %in% c(un1, un2)
-      if (!is_hierachical) {
-        stop(simpleError(
-          paste0(
-            "stratum / adjust column pair ", deparse(pair),
-            " in stats_dt are not ",
-            "hierarchical nor cross-joined; see ",
-            "?directly_adjusted_estimates section Tabulation"
-          ),
-          call = call
-        ))
-      }
-    })
-  }
-
 
   # prepare data for adjusted estimates and CIs --------------------------------
   if (length(adjust_col_nms) == 0) {
