@@ -150,7 +150,7 @@ delta_method_confidence_intervals <- function(
     value = meta_list
   )
   # @codedoc_comment_block directadjusting::delta_method_confidence_intervals
-  # - Delete column `std_err`. Rename `est` to `statistic` and `var` to
+  # - Delete columns `std_err`, `z`. Rename `est` to `statistic` and `var` to
   #   `variance`.
   # @codedoc_comment_block directadjusting::delta_method_confidence_intervals
   data.table::setnames(dt, c("est", "var"), c("statistic", "variance"))

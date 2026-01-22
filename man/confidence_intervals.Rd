@@ -105,7 +105,7 @@ are performed:
 - Add attribute named `ci_meta` to the `data.table`.
   This attribute is a list which contains elements `conf_lvl`,
   `conf_method`, and `math`.
-- Delete column `std_err`. Rename `est` to `statistic` and `var` to
+- Delete columns `std_err`, `z`. Rename `est` to `statistic` and `var` to
   `variance`.
 - Return `data.table` with columns
   `c("statistic", "variance", "ci_lo", "ci_hi")`.
