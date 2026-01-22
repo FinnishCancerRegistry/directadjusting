@@ -259,18 +259,15 @@ directly_adjusted_estimates <- function(
   keep_col_nms <- setdiff(
     c(stratum_col_nms, adjust_col_nms, stat_col_nms, var_col_nms), NA_character_
   )
-  stats_dt <- data.table::setDT(lapply(keep_col_nms, function(col_nm) {
-    stats_dt[[col_nm]]
-  }))
-  data.table::setnames(stats_dt, keep_col_nms)
+  work_dt <- data.table::setDT(as.list(stats_dt)[keep_col_nms])
   tmp_stratum_col_nm <- tmp_nms(
-    prefixes = "tmp_stratum_col_", avoid = names(stats_dt)
+    prefixes = "tmp_stratum_col_", avoid = names(work_dt)
   )
   if (length(stratum_col_nms) == 0L) {
     stratum_col_nms <- tmp_stratum_col_nm
     #' @importFrom data.table :=
-    on.exit(stats_dt[, (tmp_stratum_col_nm) := NULL])
-    stats_dt[, (tmp_stratum_col_nm) := NA]
+    on.exit(work_dt[, (tmp_stratum_col_nm) := NULL])
+    work_dt[, (tmp_stratum_col_nm) := NA]
   }
   test_col_nms <- setdiff(
     union(stratum_col_nms, adjust_col_nms),
@@ -281,7 +278,7 @@ directly_adjusted_estimates <- function(
     stratum_col_nm_pairs <- utils::combn(test_col_nms, m = 2L)
     lapply(seq_len(ncol(stratum_col_nm_pairs)), function(pair_no) {
       pair <- stratum_col_nm_pairs[, pair_no]
-      udt <- unique(stats_dt, by = pair)
+      udt <- unique(work_dt, by = pair)
 
       un1 <- data.table::uniqueN(udt[[pair[1]]])
       un2 <- data.table::uniqueN(udt[[pair[2]]])
@@ -315,10 +312,10 @@ directly_adjusted_estimates <- function(
     # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2025-11-25", "0.5.0")
     adjust_col_nms <- tmp_nms(
       prefixes = "tmp_adjust_stratum_",
-      avoid = names(stats_dt)
+      avoid = names(work_dt)
     )
     data.table::set(
-      x = stats_dt,
+      x = work_dt,
       j = adjust_col_nms,
       value = TRUE
     )
@@ -329,17 +326,17 @@ directly_adjusted_estimates <- function(
     data.table::setnames(weights_dt, "x", adjust_col_nms)
   } else {
     weights_dt <- weights_arg_to_weights_dt(weights = weights,
-                                            stats_dt = stats_dt,
+                                            stats_dt = work_dt,
                                             adjust_col_nms = adjust_col_nms)
   }
 
   add_weights_column(
-    stats_dt = stats_dt,
+    stats_dt = work_dt,
     stratum_col_nms = stratum_col_nms,
     weights_dt = weights_dt,
     adjust_col_nms = adjust_col_nms
   )
-  tmp_w_col_nm <- attr(stats_dt, "tmp_w_col_nm")
+  tmp_w_col_nm <- attr(work_dt, "tmp_w_col_nm")
 
   # bootstrapped confidence intervals ------------------------------------------
   wh_boot_ci <- which(conf_methods == "boot")
@@ -348,7 +345,7 @@ directly_adjusted_estimates <- function(
   if (length(wh_boot_ci)) {
     boot_stat_col_nms <- stat_col_nms[wh_boot_ci]
     #' @importFrom data.table .SD
-    boot_stats_dt <- stats_dt[
+    boot_stats_dt <- work_dt[
       j = .SD,
       .SDcols = c(stratum_col_nms, boot_stat_col_nms, tmp_w_col_nm)
     ]
@@ -364,7 +361,7 @@ directly_adjusted_estimates <- function(
   }
 
   # delta method confidence intervals ------------------------------------------
-  nonboot_stats_dt <- stats_dt
+  nonboot_stats_dt <- work_dt
   if (length(wh_nonboot_ci) > 0) {
     if (length(wh_boot_ci) > 0) {
       data.table::set(nonboot_stats_dt, j = boot_stat_col_nms, value = NULL)
@@ -389,8 +386,8 @@ directly_adjusted_estimates <- function(
         })
       )
     }
-    #' @importFrom data.table .SD
     nonboot_stats_dt <- nonboot_stats_dt[
+      #' @importFrom data.table .SD
       j = lapply(.SD, sum),
       .SDcols = c(nonboot_stat_col_nms, usable_var_col_nms),
       keyby = eval(stratum_col_nms)
