@@ -4,6 +4,12 @@
 
 ### directadjusting::direct_adjusted_estimates
 
+`directadjusting::delta_method_confidence_intervals` made a lot more
+flexible. It now accepts via `conf_method` a string, a call, and a list
+of calls that produce the desired confidence intervals.
+
+### directadjusting::direct_adjusted_estimates
+
 `directadjusting::direct_adjusted_estimates` option `conf_methods = "boot"`
 removed. Only delta method confidence intervals now possible.
 

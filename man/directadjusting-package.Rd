@@ -60,6 +60,13 @@ my_adj_stats <- direct_adjusted_estimates(
 \subsection{News for version 0.5.0}{
 \subsection{directadjusting::direct_adjusted_estimates}{
 
+\code{directadjusting::delta_method_confidence_intervals} made a lot more
+flexible. It now accepts via \code{conf_method} a string, a call, and a list
+of calls that produce the desired confidence intervals.
+}
+
+\subsection{directadjusting::direct_adjusted_estimates}{
+
 \code{directadjusting::direct_adjusted_estimates} option \code{conf_methods = "boot"}
 removed. Only delta method confidence intervals now possible.
 }

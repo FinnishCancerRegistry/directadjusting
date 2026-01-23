@@ -25,9 +25,27 @@ Variance estimates of \code{statistics} used to compute confidence intervals.}
 
 Confidence level of confidence intervals in \verb{]0, 1[}.}
 
-\item{conf_method}{\verb{[character]} (default \code{"identity"})
+\item{conf_method}{\verb{[character, call, list]} (default \code{"identity"})
 
-See \strong{Details}.}
+Delta method transformation to be applied.
+\itemize{
+\item \code{character}: Use one of the pre-defined transformations. Table of
+options with the correspoding math:
+}\tabular{llll}{
+   name \tab g \tab g_inv \tab g_gradient \cr
+   identity \tab theta \tab g \tab 1 \cr
+   log \tab log(theta) \tab exp(g) \tab 1/theta \cr
+   log-log \tab log(-log(theta)) \tab exp(-exp(g)) \tab 1/(theta * log(theta)) \cr
+   logit \tab log(theta) - log(1 - theta) \tab 1/(1 + exp(-g)) \tab 1/(theta - theta^2) \cr
+}
+
+\itemize{
+\item \code{call}: A quoted R expression which produces the lower / upper limit
+when evaluated. E.g.
+\code{quote(theta * exp(z * theta_standard_error / theta))}.
+\item \code{list}: Contains both the transformation and its inverse.
+E.g. \code{list(g = quote(log(theta)), g_inv = quote(exp(g)))}.
+}}
 }
 \description{
 Functions to compute confidence intervals.
@@ -40,26 +58,34 @@ Functions to compute confidence intervals.
 compute confidence intervals using the delta method. The following steps
 are performed:
 \itemize{
-\item Collect mathematical expression \code{math} for computing the lower and upper
-end of the confidence interval based on \code{conf_method}.
-The following \code{conf_method} options have pre-determined math within
-this R package: \code{c("identity", "log", "log-log")}.
-Alternatively, \code{conf_method} can be quoted R expression --- see \code{?quote}.
-In that case it will be used as-is.
-\item Collect variables \code{est = statistics}, \code{var = variances}, and
-\code{std_err = sqrt(variance)} into a single \code{data.table}.
-\item Add \code{z = stats::qnorm(p = (1 - conf_lvl) / 2)} into the \code{data.table}.
-E.g. \code{z = -1.959964} with \code{conf_lvl = 0.95}.
-\item Evaluate the mathematical expression \code{math} such that the columns in the
-\code{data.table} are available in evaluation. This creates column \code{ci_lo}.
-\item Re-set \code{z = stats::qnorm(p = conf_lvl + (1 - conf_lvl) / 2)}.
-E.g. \code{z = 1.959964} with \code{conf_lvl = 0.95}.
-\item Evaluate \code{math} again. This yields \code{ci_hi}.
+\item Compute confidence intervals based on \code{conf_method}, \code{statistics},
+\code{variances}, and \code{conf_lvl}.
+\itemize{
+\item If \code{conf_method} is a string, a pre-defined set of mathematical
+expressions are used to compute the confidenve intervals.
+\item If \code{conf_method} is a \code{call}, it is evaluated with the variables
+\code{theta}, \code{theta_variance}, \code{theta_standard_error}, and \code{z}. This is
+done once for the lower and once for the upper bound of the confidence
+interval, so for the lower bound and \code{conf_level = 0.95}
+we use \code{z = stats::qnorm(p = (1 - conf_lvl) / 2)}.
+\item If \code{conf_method} is a \code{list}, it must contain elements \code{g} and
+\code{g_inv}, e.g. \code{list(g = quote(log(theta)), g_inv = quote(exp(g)))}.
+\itemize{
+\item \code{g} is passed to \verb{[deriv]}. If that fails, a numerical derivative
+is computed.
+\item With the derivative known the variance after the transformation
+is \code{variance * g_gradient ^ 2}.
+\item With the transformed variance known the transform confidence interval
+is calculated simply via \code{g(theta) + g_standard_error * z}.
+\item These transformation-scale confidence intervals are then converted
+back to the original scale using \code{g_inv}.
+}
+}
+\item Collect a \code{data.table} with the confidence intervals and with also
+the columns \code{statistics = statistics} and \code{variance = variances}.
 \item Add attribute named \code{ci_meta} to the \code{data.table}.
-This attribute is a list which contains elements \code{conf_lvl},
-\code{conf_method}, and \code{math}.
-\item Delete columns \code{std_err}, \code{z}. Rename \code{est} to \code{statistic} and \code{var} to
-\code{variance}.
+This attribute is a list which contains elements \code{conf_lvl} and
+\code{conf_method}.
 \item Return \code{data.table} with columns
 \code{c("statistic", "variance", "ci_lo", "ci_hi")}.
 }
@@ -69,19 +95,41 @@ This attribute is a list which contains elements \code{conf_lvl},
 
 # directadjusting::delta_method_confidence_intervals
 dt_1 <- directadjusting::delta_method_confidence_intervals(
-  statistics = 0.0,
+  statistics = 0.9,
   variances = 0.1,
   conf_lvl = 0.95,
-  conf_method = "identity"
+  conf_method = "log"
 )
+
 # you can also supply your own math for computing the confidence intervals
 dt_2 <- directadjusting::delta_method_confidence_intervals(
-  statistics = 0.0,
+  statistics = 0.9,
   variances = 0.1,
   conf_lvl = 0.95,
-  conf_method = quote(est + z * std_err)
+  conf_method = quote(theta * exp(z * theta_standard_error / theta))
+)
+
+dt_3 <- directadjusting::delta_method_confidence_intervals(
+  statistics = 0.9,
+  variances = 0.1,
+  conf_lvl = 0.95,
+  conf_method = list(
+    g = quote(log(theta)),
+    g_inv = quote(exp(g))
+  )
+)
+
+dt_4 <- directadjusting::delta_method_confidence_intervals(
+  statistics = 0.9,
+  variances = 0.1,
+  conf_lvl = 0.95,
+  conf_method = list(
+    g = quote(stats::qnorm(theta)),
+    g_inv = quote(stats::pnorm(g))
+  )
 )
 stopifnot(
-  all.equal(dt_1, dt_2, check.attributes = FALSE)
+  all.equal(dt_1, dt_2, check.attributes = FALSE),
+  all.equal(dt_1, dt_3, check.attributes = FALSE)
 )
 }

@@ -57,16 +57,15 @@ confidence levels for confidence intervals; you may specify each statistic
 (see \code{stat_col_nms}) its own level by supplying a vector of values;
 values other than between \verb{(0, 1)} cause an error}
 
-\item{conf_methods}{\verb{[character]} (default \code{"identity"})
+\item{conf_methods}{\verb{[character, list]} (default \code{"identity"})
 
-Method to compute confidence intervals. Either one string (to be used for
-all statistics) or a vector of strings, one for each element of
-\code{stat_col_nms}. See \verb{[delta_method_confidence_intervals]} for
-supported delta method confidence intervals. Other options:
-\itemize{
-\item \code{"none"}: This causes no confidence intervals to be calculated for the
-respective \code{stat_col_nms} element(s).
-}}
+Method(s) to compute confidence intervals. Either one method for all stats
+(\code{stat_col_nms}) or otherwise this must be of length
+(\code{length(stat_col_nms)}). Each element is passed to
+\verb{[delta_method_confidence_intervals]} separately.
+
+Can also be \code{"none"}: This causes no confidence intervals to be calculated
+for the respective \code{stat_col_nms} element(s).}
 
 \item{weights}{\verb{[double, data.table, character]}
 

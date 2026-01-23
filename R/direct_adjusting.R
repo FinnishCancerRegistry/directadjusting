@@ -22,15 +22,15 @@
 #' confidence levels for confidence intervals; you may specify each statistic
 #' (see `stat_col_nms`) its own level by supplying a vector of values;
 #' values other than between `(0, 1)` cause an error
-#' @param conf_methods `[character]` (default `"identity"`)
+#' @param conf_methods `[character, list]` (default `"identity"`)
 #'
-#' Method to compute confidence intervals. Either one string (to be used for
-#' all statistics) or a vector of strings, one for each element of
-#' `stat_col_nms`. See `[delta_method_confidence_intervals]` for
-#' supported delta method confidence intervals. Other options:
+#' Method(s) to compute confidence intervals. Either one method for all stats
+#' (`stat_col_nms`) or otherwise this must be of length
+#' (`length(stat_col_nms)`). Each element is passed to
+#' `[delta_method_confidence_intervals]` separately.
 #'
-#' - `"none"`: This causes no confidence intervals to be calculated for the
-#'   respective `stat_col_nms` element(s).
+#' Can also be `"none"`: This causes no confidence intervals to be calculated
+#' for the respective `stat_col_nms` element(s).
 #' @param stratum_col_nms `[NULL, character]` (default `NULL`)
 #'
 #' names of columns in `stats_dt` by which statistics are stratified (and they
@@ -174,9 +174,12 @@ directly_adjusted_estimates <- function(
     is.null(stratum_col_nms) || all(stratum_col_nms %in% names(stats_dt)),
     length(var_col_nms) %in% c(0L, length(stat_col_nms)),
     var_col_nms %in% c(names(stats_dt), NA),
+
     data.table::between(conf_lvls, lower = 0.0, upper = 1.0, incbounds = FALSE),
     length(conf_lvls) %in% c(1L, length(stat_col_nms)),
-    length(conf_methods) %in% c(1L, length(stat_col_nms))
+
+    length(conf_methods) %in% c(1L, length(stat_col_nms)),
+    inherits(conf_methods, c("character", "list"))
   )
   if (!is.null(var_col_nms)) {
     lapply(setdiff(var_col_nms, NA_character_), function(var_col_nm) {
@@ -197,7 +200,7 @@ directly_adjusted_estimates <- function(
   }
   eval(substitute(stopifnot(
     conf_methods %in% ALLOWED
-  ), list(ALLOWED = allowed_conf_methods())))
+  ), list(ALLOWED = allowed_conf_method_strings__())))
   if (length(conf_methods) == 1) {
     conf_methods <- rep(conf_methods, length(stat_col_nms))
   }
