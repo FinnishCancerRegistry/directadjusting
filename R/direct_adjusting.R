@@ -207,7 +207,8 @@ directly_adjusted_estimates <- function(
 
   work_dt <- local({
     keep_col_nms <- setdiff(
-      c(stratum_col_nms, adjust_col_nms, stat_col_nms, var_col_nms), NA_character_
+      c(stratum_col_nms, adjust_col_nms, stat_col_nms, var_col_nms),
+      NA_character_
     )
     work_dt <- data.table::setDT(as.list(stats_dt)[keep_col_nms])
     work_dt[]
