@@ -10,7 +10,7 @@ confidence_interval_eval__ <- function(
   if (is.character(conf_method)) {
     # @codedoc_comment_block directadjusting:::confidence_interval_eval__
     #   + If `conf_method` is a string, a pre-defined set of mathematical
-    #     expressions are used to compute the confidenve intervals.
+    #     expressions are used to compute the confidence intervals.
     # @codedoc_comment_block directadjusting:::confidence_interval_eval__
     delta_method_confidence_interval_analytical__(
       transform = conf_method,
@@ -135,7 +135,7 @@ delta_method_confidence_intervals <- function(
     #' Delta method transformation to be applied.
     #'
     #' - `character`: Use one of the pre-defined transformations. Table of
-    #'   options with the correspoding math:
+    #'   options with the corresponding expressions:
     #'
     #'   `r knitr::kable(delta_method_analytical_expressions_table__())`
     #'

@@ -30,7 +30,7 @@ Confidence level of confidence intervals in \verb{]0, 1[}.}
 Delta method transformation to be applied.
 \itemize{
 \item \code{character}: Use one of the pre-defined transformations. Table of
-options with the correspoding math:
+options with the corresponding expressions:
 }\tabular{llll}{
    name \tab g \tab g_inv \tab g_gradient \cr
    identity \tab theta \tab g \tab 1 \cr
@@ -62,7 +62,7 @@ are performed:
 \code{variances}, and \code{conf_lvl}.
 \itemize{
 \item If \code{conf_method} is a string, a pre-defined set of mathematical
-expressions are used to compute the confidenve intervals.
+expressions are used to compute the confidence intervals.
 \item If \code{conf_method} is a \code{call}, it is evaluated with the variables
 \code{theta}, \code{theta_variance}, \code{theta_standard_error}, and \code{z}. This is
 done once for the lower and once for the upper bound of the confidence
