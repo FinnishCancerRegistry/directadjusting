@@ -152,6 +152,95 @@
 #'   dt_2[["sex"]] == stats_dt_2[["sex"]]
 #' )
 #'
+#' # sometimes when adjusting rates or counts, there can be strata where the
+#' # statistic is zero. these should be included in your statistics dataset
+#' # if you still want the weighted average be influenced by the zero.
+#' # otherwise you will get the wrong result. sometimes when naively tabulating
+#' # a dataset with e.g. dt[, .N, keyby = "stratum"] one does not get a result
+#' # row for a stratum that does not appear in the dataset even if we know that
+#' # the stratum exists, for instance only the age groups 1-17 are present in
+#' # the dataset.
+#' stats_dt_3 <- data.table::data.table(
+#'   age_group = 1:18,
+#'   count = 17:0,
+#'   var = 17:0
+#' )
+#'
+#' # this goes as intended
+#' dt_3 <- directadjusting::directly_adjusted_estimates(
+#'   stats_dt = stats_dt_3,
+#'   stat_col_nms = "count",
+#'   var_col_nms = "var",
+#'   stratum_col_nms = NULL,
+#'   adjust_col_nms = "age_group",
+#'   weights = data.table::data.table(
+#'     age_group = 1:18,
+#'     weight = 18:1
+#'   )
+#' )
+#'
+#' # this does not
+#' dt_4 <- directadjusting::directly_adjusted_estimates(
+#'   stats_dt = stats_dt_3[1:17, ],
+#'   stat_col_nms = "count",
+#'   var_col_nms = "var",
+#'   stratum_col_nms = NULL,
+#'   adjust_col_nms = "age_group",
+#'   weights = data.table::data.table(
+#'     age_group = 1:18,
+#'     weight = 18:1
+#'   )
+#' )
+#'
+#' # the weighted average that included the zero is smaller
+#' stopifnot(
+#'   dt_3[["count"]] < dt_4[["count"]]
+#' )
+#'
+#' # NAs are allowed and produce in turn NAs silently.
+#' stats_dt_5 <- data.table::data.table(
+#'   age_group = 1:18,
+#'   count = c(NA, 16:0),
+#'   var = c(NA, 16:0)
+#' )
+#' dt_5 <- directadjusting::directly_adjusted_estimates(
+#'   stats_dt = stats_dt_5,
+#'   stat_col_nms = "count",
+#'   var_col_nms = "var",
+#'   adjust_col_nms = "age_group",
+#'   weights = data.table::data.table(
+#'     age_group = 1:18,
+#'     weight = 18:1
+#'   )
+#' )
+#' stopifnot(
+#'   is.na(dt_5)
+#' )
+#'
+#' stats_dt_6 <- data.table::data.table(
+#'   age_group = 1:4,
+#'   survival = c(0.20, 0.40, 0.60, 0.80),
+#'   var = 0.05 ^ 2
+#' )
+#' # you can use conf_method to pass whatever to
+#' # `delta_method_confidence_intervals`.
+#' dt_6 <- directadjusting::directly_adjusted_estimates(
+#'   stats_dt = stats_dt_6,
+#'   stat_col_nms = "survival",
+#'   var_col_nms = "var",
+#'   adjust_col_nms = "age_group",
+#'   weights = data.table::data.table(
+#'     age_group = 1:4,
+#'     weight = 1:4
+#'   ),
+#'   conf_methods = list(
+#'     list(
+#'       g = quote(qnorm(theta)),
+#'       g_inv = quote(pnorm(g))
+#'     )
+#'   )
+#' )
+#'
 #' @export
 directly_adjusted_estimates <- function(
   stats_dt,
@@ -165,7 +254,9 @@ directly_adjusted_estimates <- function(
 ) {
   # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2026-01-22", "0.5.0")
   # `directadjusting::direct_adjusted_estimates` option `conf_methods = "boot"`
-  # removed. Only delta method confidence intervals now possible.
+  # removed. Only delta method confidence intervals now possible. Making use of
+  # the delta method is now more flexible and accepts e.g.
+  # `list("log", list(g = quote(qnorm(theta)), g_inv = quote(pnorm(g))))`.
   # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2026-01-22", "0.5.0")
   # assertions -----------------------------------------------------------------
   stopifnot(
@@ -198,9 +289,14 @@ directly_adjusted_estimates <- function(
   if (length(conf_lvls) == 1) {
     conf_lvls <- rep(conf_lvls, length(stat_col_nms))
   }
-  eval(substitute(stopifnot(
-    conf_methods %in% ALLOWED
-  ), list(ALLOWED = allowed_conf_method_strings__())))
+  lapply(seq_along(conf_methods), function(i) {
+    if (!is.character(conf_methods[[i]])) {
+      return(NULL)
+    }
+    eval(substitute(stopifnot(
+      conf_methods[i] %in% ALLOWED
+    ), list(ALLOWED = allowed_conf_method_strings__())))
+  })
   if (length(conf_methods) == 1) {
     conf_methods <- rep(conf_methods, length(stat_col_nms))
   }
@@ -218,8 +314,7 @@ directly_adjusted_estimates <- function(
   )
   if (length(stratum_col_nms) == 0L) {
     stratum_col_nms <- tmp_stratum_col_nm
-    #' @importFrom data.table :=
-    on.exit(work_dt[, (tmp_stratum_col_nm) := NULL])
+    on.exit(data.table::set(out, j = tmp_stratum_col_nm, value = NULL))
     data.table::set(work_dt, j = tmp_stratum_col_nm, value = TRUE)
   }
 
@@ -309,8 +404,8 @@ directly_adjusted_estimates <- function(
       stat_col_nm <- stat_col_nms[i]
       var_col_nm <- var_col_nms[i]
       conf_lvl <- conf_lvls[i]
-      conf_method <- conf_methods[i]
-      if (conf_method == "none") {
+      conf_method <- conf_methods[[i]]
+      if (is.character(conf_method) && conf_method == "none") {
         return(NULL)
       }
       ci_dt <- delta_method_confidence_intervals(

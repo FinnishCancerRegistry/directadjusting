@@ -44,7 +44,11 @@ delta_method_variance_analytical__ <- function(
     length(theta) == length(theta_variance),
 
     is.numeric(theta_variance),
-    theta_variance >= 0
+    ifelse(
+      is.na(theta_variance),
+      TRUE,
+      theta_variance >= 0
+    )
   )
   g_gradient_expr <-
     delta_method_analytical_expressions__(

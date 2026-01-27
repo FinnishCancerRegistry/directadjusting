@@ -193,4 +193,93 @@ stopifnot(
   dt_2[["sex"]] == stats_dt_2[["sex"]]
 )
 
+# sometimes when adjusting rates or counts, there can be strata where the
+# statistic is zero. these should be included in your statistics dataset
+# if you still want the weighted average be influenced by the zero.
+# otherwise you will get the wrong result. sometimes when naively tabulating
+# a dataset with e.g. dt[, .N, keyby = "stratum"] one does not get a result
+# row for a stratum that does not appear in the dataset even if we know that
+# the stratum exists, for instance only the age groups 1-17 are present in
+# the dataset.
+stats_dt_3 <- data.table::data.table(
+  age_group = 1:18,
+  count = 17:0,
+  var = 17:0
+)
+
+# this goes as intended
+dt_3 <- directadjusting::directly_adjusted_estimates(
+  stats_dt = stats_dt_3,
+  stat_col_nms = "count",
+  var_col_nms = "var",
+  stratum_col_nms = NULL,
+  adjust_col_nms = "age_group",
+  weights = data.table::data.table(
+    age_group = 1:18,
+    weight = 18:1
+  )
+)
+
+# this does not
+dt_4 <- directadjusting::directly_adjusted_estimates(
+  stats_dt = stats_dt_3[1:17, ],
+  stat_col_nms = "count",
+  var_col_nms = "var",
+  stratum_col_nms = NULL,
+  adjust_col_nms = "age_group",
+  weights = data.table::data.table(
+    age_group = 1:18,
+    weight = 18:1
+  )
+)
+
+# the weighted average that included the zero is smaller
+stopifnot(
+  dt_3[["count"]] < dt_4[["count"]]
+)
+
+# NAs are allowed and produce in turn NAs silently.
+stats_dt_5 <- data.table::data.table(
+  age_group = 1:18,
+  count = c(NA, 16:0),
+  var = c(NA, 16:0)
+)
+dt_5 <- directadjusting::directly_adjusted_estimates(
+  stats_dt = stats_dt_5,
+  stat_col_nms = "count",
+  var_col_nms = "var",
+  adjust_col_nms = "age_group",
+  weights = data.table::data.table(
+    age_group = 1:18,
+    weight = 18:1
+  )
+)
+stopifnot(
+  is.na(dt_5)
+)
+
+stats_dt_6 <- data.table::data.table(
+  age_group = 1:4,
+  survival = c(0.20, 0.40, 0.60, 0.80),
+  var = 0.05 ^ 2
+)
+# you can use conf_method to pass whatever to
+# `delta_method_confidence_intervals`.
+dt_6 <- directadjusting::directly_adjusted_estimates(
+  stats_dt = stats_dt_6,
+  stat_col_nms = "survival",
+  var_col_nms = "var",
+  adjust_col_nms = "age_group",
+  weights = data.table::data.table(
+    age_group = 1:4,
+    weight = 1:4
+  ),
+  conf_methods = list(
+    list(
+      g = quote(qnorm(theta)),
+      g_inv = quote(pnorm(g))
+    )
+  )
+)
+
 }

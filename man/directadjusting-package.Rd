@@ -68,7 +68,9 @@ of calls that produce the desired confidence intervals.
 \subsection{directadjusting::direct_adjusted_estimates}{
 
 \code{directadjusting::direct_adjusted_estimates} option \code{conf_methods = "boot"}
-removed. Only delta method confidence intervals now possible.
+removed. Only delta method confidence intervals now possible. Making use of
+the delta method is now more flexible and accepts e.g.
+\code{list("log", list(g = quote(qnorm(theta)), g_inv = quote(pnorm(g))))}.
 }
 
 \subsection{directadjusting::direct_adjusted_estimates}{

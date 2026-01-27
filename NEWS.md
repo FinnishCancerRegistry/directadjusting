@@ -11,7 +11,9 @@ of calls that produce the desired confidence intervals.
 ### directadjusting::direct_adjusted_estimates
 
 `directadjusting::direct_adjusted_estimates` option `conf_methods = "boot"`
-removed. Only delta method confidence intervals now possible.
+removed. Only delta method confidence intervals now possible. Making use of
+the delta method is now more flexible and accepts e.g.
+`list("log", list(g = quote(qnorm(theta)), g_inv = quote(pnorm(g))))`.
 
 ### directadjusting::direct_adjusted_estimates
 
