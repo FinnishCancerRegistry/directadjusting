@@ -58,3 +58,7 @@
 #
 # ```
 # @codedoc_comment_block R_package_description(directadjusting)
+
+# @codedoc_comment_block news("directadjusting", "2026-01-27", "0.6.0")
+# First CRAN release.
+# @codedoc_comment_block news("directadjusting", "2026-01-27", "0.6.0")

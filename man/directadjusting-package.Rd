@@ -57,6 +57,14 @@ my_adj_stats <- direct_adjusted_estimates(
 
 \section{News}{
 
+\subsection{News for version 0.6.0}{
+\subsection{directadjusting}{
+
+First CRAN release.
+}
+
+}
+
 \subsection{News for version 0.5.0}{
 \subsection{directadjusting::direct_adjusted_estimates}{
 
