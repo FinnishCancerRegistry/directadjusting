@@ -263,6 +263,7 @@ stats_dt_6 <- data.table::data.table(
   survival = c(0.20, 0.40, 0.60, 0.80),
   var = 0.05 ^ 2
 )
+
 # you can use conf_method to pass whatever to
 # `delta_method_confidence_intervals`.
 dt_6 <- directadjusting::directly_adjusted_estimates(
@@ -276,8 +277,8 @@ dt_6 <- directadjusting::directly_adjusted_estimates(
   ),
   conf_methods = list(
     list(
-      g = quote(qnorm(theta)),
-      g_inv = quote(pnorm(g))
+      g = quote(stats::qnorm(theta)),
+      g_inv = quote(stats::pnorm(g))
     )
   )
 )
