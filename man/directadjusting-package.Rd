@@ -102,6 +102,14 @@ Remove deprecated \code{directadjusting::direct_adjusted_estimates}. Use
 }
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/FinnishCancerRegistry/directadjusting/}
+  \item Report bugs at \url{https://github.com/FinnishCancerRegistry/directadjusting/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Joonas Miettinen \email{joonas.miettinen@cancer.fi} (\href{https://orcid.org/0000-0001-8624-6754}{ORCID})
 
