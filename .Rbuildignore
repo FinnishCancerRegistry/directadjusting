@@ -12,3 +12,4 @@
 ^sandbox.*\.R
 ^\.radian_history$
 ^cran-comments\.md$
+^CRAN-SUBMISSION$
