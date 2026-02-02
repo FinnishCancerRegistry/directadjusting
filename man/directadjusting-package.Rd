@@ -69,6 +69,14 @@ print(my_adj_stats)
 
 \section{News}{
 
+\subsection{News for version 0.6.1}{
+\subsection{directadjusting}{
+
+DESCRIPTION and documentation fixes.
+}
+
+}
+
 \subsection{News for version 0.6.0}{
 \subsection{directadjusting}{
 

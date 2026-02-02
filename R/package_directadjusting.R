@@ -74,3 +74,6 @@
 # @codedoc_comment_block news("directadjusting", "2026-01-27", "0.6.0")
 # First CRAN release.
 # @codedoc_comment_block news("directadjusting", "2026-01-27", "0.6.0")
+# @codedoc_comment_block news("directadjusting", "2026-02-02", "0.6.1")
+# DESCRIPTION and documentation fixes.
+# @codedoc_comment_block news("directadjusting", "2026-02-02", "0.6.1")
