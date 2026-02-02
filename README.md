@@ -43,7 +43,7 @@ my_stats <- data.table(
 my_stats[["v"]] <- my_stats[["e"]] / offsets
 
 # adjusted by age group
-my_adj_stats <- direct_adjusted_estimates(
+my_adj_stats <- directadjusting::directly_adjusted_estimates(
   stats_dt = my_stats,
   stat_col_nms = "e",
   var_col_nms = "v",
