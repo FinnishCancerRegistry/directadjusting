@@ -16,20 +16,15 @@
 #
 # ```r
 # devtools::install_github(
-#   "FinnishCancerRegistry/directadjusting",
-#   ref = readline("enter latest tag on github: ")
+#   "FinnishCancerRegistry/directadjusting@release"
 # )
 # ```
 #
 # # Example
 # ```r
-# library("directadjusting")
-#
 # # suppose we have poisson rates that we want to adjust for by age group.
 # # they are stratified by sex.
-# library("data.table")
 # set.seed(1337)
-#
 # offsets <- rnorm(8, mean = 1000, sd = 100)
 # baseline <- 100
 # sex_hrs <- rep(1:2, each = 4)
@@ -37,15 +32,26 @@
 # counts <- rpois(8, baseline * sex_hrs * age_group_hrs)
 #
 # # raw estimates
-# my_stats <- data.table(
+# my_stats <- data.table::data.table(
 #   sex = rep(1:2, each = 4),
 #   ag = rep(1:4, times = 2),
 #   e = counts / offsets
 # )
-# my_stats[["v"]] <- my_stats[["e"]] / offsets
+# my_stats[, "v" := my_stats[["e"]] / offsets]
+# print(my_stats)
+# #      sex    ag          e            v
+# #    <int> <int>      <num>        <num>
+# # 1:     1     1 0.08928141 8.759527e-05
+# # 2:     1     2 0.10054601 1.175523e-04
+# # 3:     1     3 0.11987410 1.238776e-04
+# # 4:     1     4 0.09722692 8.365551e-05
+# # 5:     2     1 0.18043221 1.937844e-04
+# # 6:     2     2 0.14781448 1.227479e-04
+# # 7:     2     3 0.21747515 1.987203e-04
+# # 8:     2     4 0.21519746 1.781152e-04
 #
 # # adjusted by age group
-# my_adj_stats <- direct_adjusted_estimates(
+# my_adj_stats <- directadjusting::directly_adjusted_estimates(
 #   stats_dt = my_stats,
 #   stat_col_nms = "e",
 #   var_col_nms = "v",
@@ -56,6 +62,12 @@
 #   weights = c(200, 300, 400, 100)
 # )
 #
+# print(my_adj_stats)
+# # Key: <sex>
+# #      sex         e            v       e_lo      e_hi
+# #    <int>     <num>        <num>      <num>     <num>
+# # 1:     1 0.1056924 3.474049e-05 0.09474912 0.1178996
+# # 2:     2 0.1889406 5.237509e-05 0.17527556 0.2036710
 # ```
 # @codedoc_comment_block R_package_description(directadjusting)
 

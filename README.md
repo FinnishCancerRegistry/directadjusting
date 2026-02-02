@@ -14,8 +14,7 @@ Compute estimates and confidence intervals of weighted averages quickly and easi
 
 ```r
 devtools::install_github(
-  "FinnishCancerRegistry/directadjusting",
-  ref = readline("enter latest tag on github: ")
+  "FinnishCancerRegistry/directadjusting@release"
 )
 ```
 
