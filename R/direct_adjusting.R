@@ -43,19 +43,9 @@
 #' - `NULL`: No adjusting is performed.
 #' - `character`: Adjust by these columns.
 #' @template weights_arg
-#' @section Weights:
-#'
-#' The weights are scaled internally to sum to one, but they need to be positive
-#' numbers (or zero). The scaling is performed separately by each unique
-#' combination of `stratum_col_nms` columns. This allows you to have e.g.
-#' two hierarchical variables, one used for adjusting and one for stratifying
-#' output (such as 18 age groups of 5 years for adjusting and 4 larger age
-#' groups for stratifying output). See **Examples**.
-#'
 #' @examples
 #'
-#' # suppose we have poisson rates that we want to adjust for by age group.
-#' # they are stratified by sex.
+#' # directadjusting::directly_adjusted_estimates
 #' library("data.table")
 #' set.seed(1337)
 #'
@@ -97,37 +87,6 @@
 #'   adjust_col_nms = "ag",
 #'   weights = c(200, 300, 400, 100)
 #' )
-#'
-#' # survival example; see help("survival.formula")
-#' if (requireNamespace("survival", quietly = TRUE)) {
-#'   library("survival")
-#'   library("data.table")
-#'   fit <- survfit(Surv(time, status) ~ x, data = aml)
-#'   surv_stats <- summary(fit, times = 0:40)
-#'   surv_dt <- data.table::data.table(
-#'     x = surv_stats[["strata"]],
-#'     time = surv_stats[["time"]],
-#'     surv = surv_stats[["surv"]],
-#'     var = surv_stats[["std.err"]] ** 2
-#'   )
-#'   surv_dt_adj <- directly_adjusted_estimates(
-#'     stats_dt = surv_dt,
-#'     stat_col_nms = "surv",
-#'     var_col_nms = "var",
-#'     conf_lvls = 0.95,
-#'     conf_methods = "log-log",
-#'     stratum_col_nms = "time",
-#'     adjust_col_nms = "x",
-#'     weights = c(600, 400)
-#'   )
-#'   print(surv_dt_adj, nrows = 10)
-#'   matplot(
-#'     y = surv_dt_adj[, list(surv, surv_lo, surv_hi)],
-#'     x = surv_dt_adj[["time"]], type = "s", col = 1, lty = 1,
-#'     xlab = "time", ylab = "survival",
-#'     main = "Survival with 95 % CIs"
-#'   )
-#' }
 #'
 #' # with no adjusting columns defined you get the same table as input
 #' # but with confidence intervals. this for the sake of
@@ -242,7 +201,7 @@
 #'   )
 #' )
 #'
-#' @export
+#' @eval codedoc::pkg_doc_fun("directadjusting::directly_adjusted_estimates")
 directly_adjusted_estimates <- function(
   stats_dt,
   stat_col_nms,
@@ -302,6 +261,13 @@ directly_adjusted_estimates <- function(
     conf_methods <- rep(conf_methods, length(stat_col_nms))
   }
 
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  # `directadjusting::directly_adjusted_estimates` computes weighted
+  # averages and their confidence intervals. Performs the following steps:
+  #
+  # - Makes a new `data.table` with data from `stats_dt` without copying any
+  #   column data to avoid modifying `stats_dt` itself.
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
   work_dt <- local({
     keep_col_nms <- setdiff(
       c(stratum_col_nms, adjust_col_nms, stat_col_nms, var_col_nms),
@@ -341,11 +307,19 @@ directly_adjusted_estimates <- function(
     )
     data.table::setnames(weights_dt, "x", adjust_col_nms)
   } else {
+    # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+    # - Handles argument `weights` in order to produce a `data.table` of weights
+    #   if it wasn't one already.
+    # @codedoc_comment_block directadjusting::directly_adjusted_estimates
     weights_dt <- weights_arg_to_weights_dt(weights = weights,
                                             stats_dt = work_dt,
                                             adjust_col_nms = adjust_col_nms)
   }
 
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  # - Inserts the weights into `stats_dt`.
+  # @codedoc_insert_comment_block directadjusting:::add_weights_column
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
   add_weights_column(
     stats_dt = work_dt,
     stratum_col_nms = stratum_col_nms,
@@ -370,6 +344,12 @@ directly_adjusted_estimates <- function(
 
   # delta method confidence intervals ------------------------------------------
   local({
+    # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+    # - Computes weighted averages of `stat_col_nms` and `var_col_nms`
+    #   (the latter with squared weights because they are variances)
+    #   over `adjust_col_nms`. This results in a `data.table` without column(s)
+    #   `adjust_col_nms`.
+    # @codedoc_comment_block directadjusting::directly_adjusted_estimates
     data.table::set(
       work_dt,
       j = stat_col_nms,
@@ -406,6 +386,12 @@ directly_adjusted_estimates <- function(
       var_col_nm <- var_col_nms[i]
       conf_lvl <- conf_lvls[i]
       conf_method <- conf_methods[[i]]
+      # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+      # - For each `i` in  `seq_along(stat_col_nm)`:
+      #   + If `conf_methods[[i]]` is `"none"`, doesn't compute confidence
+      #     intervals.
+      #   + Otherwise calls `[delta_method_confidence_intervals]`.
+      # @codedoc_comment_block directadjusting::directly_adjusted_estimates
       if (is.character(conf_method) && conf_method == "none") {
         return(NULL)
       }
@@ -452,15 +438,34 @@ directly_adjusted_estimates <- function(
   if (identical(stratum_col_nms, tmp_stratum_col_nm)) {
     stratum_col_nms <- NULL
   }
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  # - Sets attribute `directly_adjusted_estimates_meta`. It is a list
+  #   containing:
+  #   + `call`: The call to `directadjusting::directly_adjusted_estimates`.
+  #   + `stat_col_nms`: The argument as given by the user.
+  #   + `var_col_nms`: The argument as given by the user.
+  #   + `stratum_col_nms`: The argument as given by the user.
+  #   + `adjust_col_nms`: The argument as given by the user.
+  #   + `conf_lvls`: The argument, but always of length `length(stat_col_nms)`.
+  #   + `conf_methods`: The argument, but always of length
+  #     `length(stat_col_nms)`.
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
   call <- match.call()
   data.table::setattr(
     out,
-    "direct_adjusting_meta",
+    "directly_adjusted_estimates_meta",
     mget(c("call", "stat_col_nms", "var_col_nms", "stratum_col_nms",
            "adjust_col_nms", "conf_lvls", "conf_methods"))
   )
 
-  out[]
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  # - Returns a `data.table`. Returned columns are those given via
+  #   `stratum_col_nms`, `stat_col_nms`, and `var_col_nms`.
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  #' @return
+  #' Returns a `data.table`. Returned columns are those given via
+  #' `stratum_col_nms`, `stat_col_nms`, and `var_col_nms`.
+  return(out[])
 }
 
 # @codedoc_comment_block news("directadjusting", "2024-12-10", "0.3.0")

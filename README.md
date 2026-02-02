@@ -4,7 +4,7 @@
 # Package `directadjusting`
 
 
-Compute estimates and confidence intervals of weighted averages quickly and easily.
+Compute estimates and confidence intervals of weighted averages quickly and easily. Weighted averages are computed using data.table for speed. Confidence intervals are approximated using the delta method with either using known formulae or via algorithmic or numerical integration.
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml)

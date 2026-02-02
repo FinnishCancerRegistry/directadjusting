@@ -192,5 +192,9 @@ delta_method_confidence_intervals <- function(
   # - Return `data.table` with columns
   #   `c("statistic", "variance", "ci_lo", "ci_hi")`.
   # @codedoc_comment_block directadjusting::delta_method_confidence_intervals
+  # @codedoc_comment_block return(directadjusting::delta_method_confidence_intervals)
+  # Returns a `data.table` with columns
+  # `c("statistic", "variance", "ci_lo", "ci_hi")`.
+  # @codedoc_comment_block return(directadjusting::delta_method_confidence_intervals)
   return(dt[])
 }

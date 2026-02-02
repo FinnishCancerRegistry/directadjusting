@@ -47,6 +47,12 @@ when evaluated. E.g.
 E.g. \code{list(g = quote(log(theta)), g_inv = quote(exp(g)))}.
 }}
 }
+\value{
+\strong{directadjusting::delta_method_confidence_intervals}
+
+Returns a \code{data.table} with columns
+\code{c("statistic", "variance", "ci_lo", "ci_hi")}.
+}
 \description{
 Functions to compute confidence intervals.
 }
@@ -71,8 +77,8 @@ we use \code{z = stats::qnorm(p = (1 - conf_lvl) / 2)}.
 \item If \code{conf_method} is a \code{list}, it must contain elements \code{g} and
 \code{g_inv}, e.g. \code{list(g = quote(log(theta)), g_inv = quote(exp(g)))}.
 \itemize{
-\item \code{g} is passed to \verb{[deriv]}. If that fails, a numerical derivative
-is computed.
+\item \code{g} is passed to \verb{[stats::deriv]}. If that fails, a numerical
+derivative is computed.
 \item With the derivative known the variance after the transformation
 is \code{variance * g_gradient ^ 2}.
 \item With the transformed variance known the transform confidence interval

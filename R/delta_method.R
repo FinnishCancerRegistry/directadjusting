@@ -11,8 +11,8 @@ delta_method_variance_algorithmic__ <- function(
     is.numeric(theta_variance)
   )
   # @codedoc_comment_block directadjusting:::delta_method_variance_algorithmic__
-  #     * `g` is passed to `[deriv]`. If that fails, a numerical derivative
-  #       is computed.
+  #     * `g` is passed to `[stats::deriv]`. If that fails, a numerical
+  #       derivative is computed.
   # @codedoc_comment_block directadjusting:::delta_method_variance_algorithmic__
   g_gradient_expr <- tryCatch(
     stats::deriv(expr = g, "theta"),

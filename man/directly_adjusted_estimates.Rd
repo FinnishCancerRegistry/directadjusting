@@ -79,24 +79,58 @@ variables that are used to adjust estimates, and one column named
 \code{weight}. E.g. \code{data.table(agegroup = 1:3, weight = c(100, 500, 400))}.
 }}
 }
+\value{
+Returns a \code{data.table}. Returned columns are those given via
+\code{stratum_col_nms}, \code{stat_col_nms}, and \code{var_col_nms}.
+}
 \description{
 Compute direct adjusted estimates from a table of statistics.
 }
-\section{Weights}{
-
-
-The weights are scaled internally to sum to one, but they need to be positive
-numbers (or zero). The scaling is performed separately by each unique
-combination of \code{stratum_col_nms} columns. This allows you to have e.g.
-two hierarchical variables, one used for adjusting and one for stratifying
-output (such as 18 age groups of 5 years for adjusting and 4 larger age
-groups for stratifying output). See \strong{Examples}.
+\details{
+\code{directadjusting::directly_adjusted_estimates} computes weighted
+averages and their confidence intervals. Performs the following steps:
+\itemize{
+\item Makes a new \code{data.table} with data from \code{stats_dt} without copying any
+column data to avoid modifying \code{stats_dt} itself.
+\item Handles argument \code{weights} in order to produce a \code{data.table} of weights
+if it wasn't one already.
+\item Inserts the weights into \code{stats_dt}.
+\itemize{
+\item Weights are merged into \code{stats_dt} in-place by making a left join
+on \code{weights_dt} using \code{stats_dt} and adding column \code{weight} resulting
+from this join into \code{stats_dt}.
+\item Re-scale weights to sum to one within each stratum defined by
+\code{stratum_col_nms}.
 }
-
+\item Computes weighted averages of \code{stat_col_nms} and \code{var_col_nms}
+(the latter with squared weights because they are variances)
+over \code{adjust_col_nms}. This results in a \code{data.table} without column(s)
+\code{adjust_col_nms}.
+\item For each \code{i} in  \code{seq_along(stat_col_nm)}:
+\itemize{
+\item If \code{conf_methods[[i]]} is \code{"none"}, doesn't compute confidence
+intervals.
+\item Otherwise calls \verb{[delta_method_confidence_intervals]}.
+}
+\item Sets attribute \code{directly_adjusted_estimates_meta}. It is a list
+containing:
+\itemize{
+\item \code{call}: The call to \code{directadjusting::directly_adjusted_estimates}.
+\item \code{stat_col_nms}: The argument as given by the user.
+\item \code{var_col_nms}: The argument as given by the user.
+\item \code{stratum_col_nms}: The argument as given by the user.
+\item \code{adjust_col_nms}: The argument as given by the user.
+\item \code{conf_lvls}: The argument, but always of length \code{length(stat_col_nms)}.
+\item \code{conf_methods}: The argument, but always of length
+\code{length(stat_col_nms)}.
+}
+\item Returns a \code{data.table}. Returned columns are those given via
+\code{stratum_col_nms}, \code{stat_col_nms}, and \code{var_col_nms}.
+}
+}
 \examples{
 
-# suppose we have poisson rates that we want to adjust for by age group.
-# they are stratified by sex.
+# directadjusting::directly_adjusted_estimates
 library("data.table")
 set.seed(1337)
 
@@ -138,37 +172,6 @@ my_adj_stats <- directly_adjusted_estimates(
   adjust_col_nms = "ag",
   weights = c(200, 300, 400, 100)
 )
-
-# survival example; see help("survival.formula")
-if (requireNamespace("survival", quietly = TRUE)) {
-  library("survival")
-  library("data.table")
-  fit <- survfit(Surv(time, status) ~ x, data = aml)
-  surv_stats <- summary(fit, times = 0:40)
-  surv_dt <- data.table::data.table(
-    x = surv_stats[["strata"]],
-    time = surv_stats[["time"]],
-    surv = surv_stats[["surv"]],
-    var = surv_stats[["std.err"]] ** 2
-  )
-  surv_dt_adj <- directly_adjusted_estimates(
-    stats_dt = surv_dt,
-    stat_col_nms = "surv",
-    var_col_nms = "var",
-    conf_lvls = 0.95,
-    conf_methods = "log-log",
-    stratum_col_nms = "time",
-    adjust_col_nms = "x",
-    weights = c(600, 400)
-  )
-  print(surv_dt_adj, nrows = 10)
-  matplot(
-    y = surv_dt_adj[, list(surv, surv_lo, surv_hi)],
-    x = surv_dt_adj[["time"]], type = "s", col = 1, lty = 1,
-    xlab = "time", ylab = "survival",
-    main = "Survival with 95 \% CIs"
-  )
-}
 
 # with no adjusting columns defined you get the same table as input
 # but with confidence intervals. this for the sake of

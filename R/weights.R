@@ -64,6 +64,11 @@ add_weights_column <- function(
   )
   tmp_w_col_nm <- tmp_col_nms[1]
   tmp_w_sum_col_nm <- tmp_col_nms[2]
+  # @codedoc_comment_block directadjusting:::add_weights_column
+  #   + Weights are merged into `stats_dt` in-place by making a left join
+  #     on `weights_dt` using `stats_dt` and adding column `weight` resulting
+  #     from this join into `stats_dt`.
+  # @codedoc_comment_block directadjusting:::add_weights_column
   data.table::set(
     x = stats_dt,
     j = tmp_w_col_nm,
@@ -75,6 +80,10 @@ add_weights_column <- function(
       .SDcols = "weight"
     ]
   )
+  # @codedoc_comment_block directadjusting:::add_weights_column
+  #   + Re-scale weights to sum to one within each stratum defined by
+  #     `stratum_col_nms`.
+  # @codedoc_comment_block directadjusting:::add_weights_column
   stats_dt[
     #' @importFrom data.table .SD :=
     j = (tmp_w_sum_col_nm) := lapply(.SD, sum),
