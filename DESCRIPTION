@@ -9,7 +9,7 @@ Description: Compute estimates and confidence intervals of weighted
     averages quickly and easily. Weighted averages are computed using
     data.table for speed. Confidence intervals are approximated using the
     delta method with either using known formulae or via algorithmic or
-    numerical integration.
+    numerical derivation.
 License: MIT + file LICENSE
 URL: https://github.com/FinnishCancerRegistry/directadjusting/
 BugReports: 
