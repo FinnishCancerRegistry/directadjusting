@@ -11,6 +11,13 @@ Compute estimates and confidence intervals of weighted averages quickly and easi
 \href{https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml}{\if{html}{\figure{https://github.com/FinnishCancerRegistry/directadjusting/actions/workflows/R-CMD-check.yaml/badge.svg}}}
 }
 \section{Recommended installation}{
+You can install this R package from CRAN.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{install.packages("directadjusting")
+}\if{html}{\out{</div>}}
+
+Alternatively this installs the latest release.
+
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{devtools::install_github(
   "FinnishCancerRegistry/directadjusting@release"
 )

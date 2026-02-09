@@ -14,6 +14,14 @@
 #
 # # Recommended installation
 #
+# You can install this R package from CRAN.
+#
+# ```r
+# install.packages("directadjusting")
+# ```
+#
+# Alternatively this installs the latest release.
+#
 # ```r
 # devtools::install_github(
 #   "FinnishCancerRegistry/directadjusting@release"
