@@ -6,8 +6,12 @@ tmp_nms <- function(
   n_random_elems = 10L,
   n_max_tries = 100L
 ) {
-  df <- data.frame(prefix = prefixes, suffx = suffixes, tmp_nm = "",
-                   stringsAsFactors = FALSE)
+  df <- data.frame(
+    prefix = prefixes,
+    suffx = suffixes,
+    tmp_nm = "",
+    stringsAsFactors = FALSE
+  )
   n_nms <- nrow(df)
   avoid <- c(avoid, "")
   for (i in seq(n_nms)) {
@@ -15,7 +19,9 @@ tmp_nms <- function(
       random_part <- sample(pool, size = n_random_elems, replace = TRUE)
       random_part <- paste0(random_part, collapse = "")
       df[["tmp_nm"]][i] <- paste0(
-        df[["prefix"]][i], random_part, df[["suffix"]][i]
+        df[["prefix"]][i],
+        random_part,
+        df[["suffix"]][i]
       )
     }
     avoid <- c(avoid, df[["tpm_nm"]][i])

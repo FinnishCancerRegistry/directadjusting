@@ -234,9 +234,12 @@ directly_adjusted_estimates <- function(
   )
   if (!is.null(var_col_nms)) {
     lapply(setdiff(var_col_nms, NA_character_), function(var_col_nm) {
-      eval(substitute(stopifnot(
-        stats_dt[[VCN]] >= 0 | is.na(stats_dt[[VCN]])
-      ), list(VCN = var_col_nm)))
+      eval(substitute(
+        stopifnot(
+          stats_dt[[VCN]] >= 0 | is.na(stats_dt[[VCN]])
+        ),
+        list(VCN = var_col_nm)
+      ))
     })
   } else {
     var_col_nms <- rep(NA_character_, length(stat_col_nms))
@@ -253,9 +256,12 @@ directly_adjusted_estimates <- function(
     if (!is.character(conf_methods[[i]])) {
       return(NULL)
     }
-    eval(substitute(stopifnot(
-      conf_methods[i] %in% ALLOWED
-    ), list(ALLOWED = allowed_conf_method_strings__())))
+    eval(substitute(
+      stopifnot(
+        conf_methods[i] %in% ALLOWED
+      ),
+      list(ALLOWED = allowed_conf_method_strings__())
+    ))
   })
   if (length(conf_methods) == 1) {
     conf_methods <- rep(conf_methods, length(stat_col_nms))
@@ -277,7 +283,8 @@ directly_adjusted_estimates <- function(
     work_dt[]
   })
   tmp_stratum_col_nm <- tmp_nms(
-    prefixes = "tmp_stratum_col_", avoid = names(work_dt)
+    prefixes = "tmp_stratum_col_",
+    avoid = names(work_dt)
   )
   if (length(stratum_col_nms) == 0L) {
     stratum_col_nms <- tmp_stratum_col_nm
@@ -311,9 +318,11 @@ directly_adjusted_estimates <- function(
     # - Handles argument `weights` in order to produce a `data.table` of weights
     #   if it wasn't one already.
     # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-    weights_dt <- weights_arg_to_weights_dt(weights = weights,
-                                            stats_dt = work_dt,
-                                            adjust_col_nms = adjust_col_nms)
+    weights_dt <- weights_arg_to_weights_dt(
+      weights = weights,
+      stats_dt = work_dt,
+      adjust_col_nms = adjust_col_nms
+    )
   }
 
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
@@ -361,7 +370,7 @@ directly_adjusted_estimates <- function(
       x = work_dt,
       j = var_col_nms,
       value = lapply(var_col_nms, function(vcn) {
-        work_dt[[vcn]] * (work_dt[[tmp_w_col_nm]] ^ 2)
+        work_dt[[vcn]] * (work_dt[[tmp_w_col_nm]]^2)
       })
     )
     adjusted_stats_dt <- work_dt[
@@ -414,7 +423,6 @@ directly_adjusted_estimates <- function(
     })
   })
 
-
   # final touches --------------------------------------------------------------
   ordered_stat_col_nms <- unlist(lapply(
     seq_along(stat_col_nms),
@@ -423,8 +431,10 @@ directly_adjusted_estimates <- function(
       var_col_nm <- var_col_nms[i]
       ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
 
-      order_col_nms <- intersect(c(stat_col_nm, var_col_nm, ci_col_nms),
-                                 names(out))
+      order_col_nms <- intersect(
+        c(stat_col_nm, var_col_nm, ci_col_nms),
+        names(out)
+      )
       order_col_nms
     }
   ))
@@ -454,8 +464,15 @@ directly_adjusted_estimates <- function(
   data.table::setattr(
     out,
     "directly_adjusted_estimates_meta",
-    mget(c("call", "stat_col_nms", "var_col_nms", "stratum_col_nms",
-           "adjust_col_nms", "conf_lvls", "conf_methods"))
+    mget(c(
+      "call",
+      "stat_col_nms",
+      "var_col_nms",
+      "stratum_col_nms",
+      "adjust_col_nms",
+      "conf_lvls",
+      "conf_methods"
+    ))
   )
 
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates

@@ -31,7 +31,7 @@ delta_method_variance_algorithmic__ <- function(
   #     * With the derivative known the variance after the transformation
   #       is `variance * g_gradient ^ 2`.
   # @codedoc_comment_block directadjusting:::delta_method_variance_algorithmic__
-  return(theta_variance * (g_gradient_value ^ 2))
+  return(theta_variance * (g_gradient_value^2))
 }
 
 delta_method_variance_analytical__ <- function(
@@ -55,7 +55,7 @@ delta_method_variance_analytical__ <- function(
       transform
     )[["g_gradient"]]
   g_gradient_value <- eval(g_gradient_expr, list(theta = theta))
-  out <- theta_variance * (g_gradient_value ^ 2)
+  out <- theta_variance * (g_gradient_value^2)
   out[theta_variance == 0.0] <- 0.0
   return(out)
 }
@@ -74,10 +74,12 @@ delta_method_confidence_interval_eval__ <- function(
   #       is calculated simply via `g(theta) + g_standard_error * z`.
   # @codedoc_comment_block directadjusting:::delta_method_confidence_interval_eval__
   transform_standard_error_value <- sqrt(g_variance)
-  transform_ci_lo <- transform_value + stats::qnorm(p = a / 2) *
-    transform_standard_error_value
-  transform_ci_hi <- transform_value + stats::qnorm(p = 1 - a / 2) *
-    transform_standard_error_value
+  transform_ci_lo <- transform_value +
+    stats::qnorm(p = a / 2) *
+      transform_standard_error_value
+  transform_ci_hi <- transform_value +
+    stats::qnorm(p = 1 - a / 2) *
+      transform_standard_error_value
   # @codedoc_comment_block directadjusting:::delta_method_confidence_interval_eval__
   #     * These transformation-scale confidence intervals are then converted
   #       back to the original scale using `g_inv`.
@@ -148,7 +150,7 @@ delta_method_analytical_expressions_list__ <- list(
   "logit" = list(
     g = quote(log(theta) - log(1 - theta)),
     g_inv = quote(1 / (1 + exp(-g))),
-    g_gradient = quote(1 / (theta - theta ^ 2))
+    g_gradient = quote(1 / (theta - theta^2))
   )
 )
 
