@@ -47,7 +47,8 @@ should be stratified by these columns after direct adjusting)}
 Names of columns in \code{stats_dt} by which statistics are currently stratified
 and by which the statistics should be adjusted (e.g. \code{"agegroup"}).
 \itemize{
-\item \code{NULL}: No adjusting is performed.
+\item \code{NULL}: If \code{weights} is a \code{data.table}, use its stratifying columns. Else
+no adjusting is performed.
 \item \code{character}: Adjust by these columns.
 }}
 
@@ -81,7 +82,13 @@ variables that are used to adjust estimates, and one column named
 }
 \value{
 Returns a \code{data.table}. Returned columns are those given via
-\code{stratum_col_nms}, \code{stat_col_nms}, and \code{var_col_nms}.
+\code{stratum_col_nms}, \code{stat_col_nms}, and \code{var_col_nms} and additional
+confidence interval columns. If \code{weights} was a
+\code{data.table}, the names of the stats, variances, and confidence bounds
+columns are identified by the respective suffix of the weight column,
+e.g. \code{stat_col_nms = c("s", "r")} and
+\code{weights = data.table(age_group = 1:4, weight_1 = 1:4, weight2 = 4:1)}
+will result in output columns \code{s_1}, \code{s2}, \code{r_1}, and \code{r2} etc.
 }
 \description{
 Compute direct adjusted estimates from a table of statistics.
@@ -92,27 +99,26 @@ averages and their confidence intervals. Performs the following steps:
 \itemize{
 \item Makes a new \code{data.table} with data from \code{stats_dt} without copying any
 column data to avoid modifying \code{stats_dt} itself.
-\item Handles argument \code{weights} in order to produce a \code{data.table} of weights
+\item Handle argument \code{weights} in order to produce a \code{data.table} of weights
 if it wasn't one already.
-\item Inserts the weights into \code{stats_dt}.
+\item Insert the weights into \code{stats_dt}.
 \itemize{
 \item Weights are merged into \code{stats_dt} in-place by making a left join
-on \code{weights_dt} using \code{stats_dt} and adding column \code{weight} resulting
-from this join into \code{stats_dt}.
+of \code{stats_dt} and \code{weights_dt}.
 \item Re-scale weights to sum to one within each stratum defined by
 \code{stratum_col_nms}.
 }
-\item Computes weighted averages of \code{stat_col_nms} and \code{var_col_nms}
+\item Compute weighted averages of \code{stat_col_nms} and \code{var_col_nms}
 (the latter with squared weights because they are variances)
 over \code{adjust_col_nms}. This results in a \code{data.table} without column(s)
 \code{adjust_col_nms}.
-\item For each \code{i} in  \code{seq_along(stat_col_nm)}:
+\item For each statistic:
 \itemize{
-\item If \code{conf_methods[[i]]} is \code{"none"}, doesn't compute confidence
-intervals.
-\item Otherwise calls \verb{[delta_method_confidence_intervals]}.
+\item If the correspoding \code{conf_methods} element is \code{"none"}, skip confidence
+intervals computation.
+\item Otherwise call \verb{[delta_method_confidence_intervals]}.
 }
-\item Sets attribute \code{directly_adjusted_estimates_meta}. It is a list
+\item Set attribute \code{directly_adjusted_estimates_meta}. It is a list
 containing:
 \itemize{
 \item \code{call}: The call to \code{directadjusting::directly_adjusted_estimates}.
@@ -123,11 +129,45 @@ containing:
 \item \code{conf_lvls}: The argument, but always of length \code{length(stat_col_nms)}.
 \item \code{conf_methods}: The argument, but always of length
 \code{length(stat_col_nms)}.
+\item \code{meta_dt}: Contains columns
+\itemize{
+\item \code{stat_col_nm}: Elements of arg \code{stat_col_nms}.
+\item \code{stat_col_nm_w}: Corresponding name of column containing weighted
+statistics. These columns names are in the output of
+\code{directadjusting::directly_adjusted_estimates}.
+\item \code{var_col_nm}: Elements of arg \code{var_col_nms}.
+\item \code{var_col_nm_w}: Like \code{stat_col_nm_w} but for variance column names.
+\item \code{conf_method}: Correspoding \code{conf_methods} elements.
+\item \code{conf_lvl}: Correspoding \code{conf_lvls} elements.
+\item \code{ci_lo_col_nm_w}: Name of confidence interval lower bound of the
+weighted statistic.
+\item \code{ci_hi_col_nm_w}: Name of confidence interval upper bound of the
+weighted statistic.
 }
-\item Returns a \code{data.table}. Returned columns are those given via
-\code{stratum_col_nms}, \code{stat_col_nms}, and \code{var_col_nms}.
+}
+\item Return a \code{data.table}. Returned columns are those given via
+\code{stratum_col_nms}, \code{stat_col_nms}, and \code{var_col_nms} and additional
+confidence interval columns. If \code{weights} was a
+\code{data.table}, the names of the stats, variances, and confidence bounds
+columns are identified by the respective suffix of the weight column,
+e.g. \code{stat_col_nms = c("s", "r")} and
+\code{weights = data.table(age_group = 1:4, weight_1 = 1:4, weight2 = 4:1)}
+will result in output columns \code{s_1}, \code{s2}, \code{r_1}, and \code{r2} etc.
 }
 }
+\section{News for version 0.7.0}{
+
+
+\code{directadjusting::directly_adjusted_estimates} arg \code{adjust_col_nms} is
+now automatically
+determined based on \code{weights} if \code{weights} is a \code{data.frame} /
+\code{data.table}.
+
+\code{directadjusting::directly_adjusted_estimates} can now handle \code{weights}
+\code{data.table} with more than one column containing weights, e.g.
+\code{weight_europe}, \code{weight_world}.
+}
+
 \examples{
 
 # directadjusting::directly_adjusted_estimates
@@ -145,7 +185,7 @@ my_stats <- data.table::data.table(
   sex = rep(1:2, each = 4),
   ag = rep(1:4, times = 2),
   e = counts / offsets,
-  v = counts / (offsets ** 2)
+  v = counts / (offsets**2)
 )
 
 # adjusted by age group
@@ -161,7 +201,7 @@ my_adj_stats <- directly_adjusted_estimates(
 )
 
 # adjusted by smaller age groups, stratified by larger age groups
-my_stats[, "ag2" := c(1,1, 2,2, 1,1, 2,2)]
+my_stats[, "ag2" := c(1, 1, 2, 2, 1, 1, 2, 2)]
 my_adj_stats <- directly_adjusted_estimates(
   stats_dt = my_stats,
   stat_col_nms = "e",
@@ -264,15 +304,14 @@ stopifnot(
 stats_dt_6 <- data.table::data.table(
   age_group = 1:4,
   survival = c(0.20, 0.40, 0.60, 0.80),
-  var = 0.05 ^ 2
+  survival_var = 0.05^2
 )
-
-# you can use conf_method to pass whatever to
+# you can use conf_methods to pass whatever to
 # `delta_method_confidence_intervals`.
 dt_6 <- directadjusting::directly_adjusted_estimates(
   stats_dt = stats_dt_6,
   stat_col_nms = "survival",
-  var_col_nms = "var",
+  var_col_nms = "survival_var",
   adjust_col_nms = "age_group",
   weights = data.table::data.table(
     age_group = 1:4,
@@ -284,6 +323,46 @@ dt_6 <- directadjusting::directly_adjusted_estimates(
       g_inv = quote(stats::pnorm(g))
     )
   )
+)
+
+# the wame weights data.table can contain more than one weight column
+dt_7 <- directadjusting::directly_adjusted_estimates(
+  stats_dt = stats_dt_6,
+  stat_col_nms = "survival",
+  var_col_nms = "survival_var",
+  adjust_col_nms = "age_group",
+  weights = data.table::data.table(
+    age_group = 1:4,
+    weight_1 = 1:4,
+    weight2 = 4:1
+  )
+)
+stopifnot(
+  c("survival_1", "survival2") \%in\% names(dt_7)
+)
+
+# ... and multiple statistics columns as well
+data.table::set(
+  x = stats_dt_6,
+  j = c("risk", "risk_var"),
+  value = list(
+    1 - stats_dt_6[["survival"]],
+    stats_dt_6[["survival_var"]]
+  )
+)
+dt_8 <- directadjusting::directly_adjusted_estimates(
+  stats_dt = stats_dt_6,
+  stat_col_nms = c("survival", "risk"),
+  var_col_nms = c("survival_var", "risk_var"),
+  adjust_col_nms = "age_group",
+  weights = data.table::data.table(
+    age_group = 1:4,
+    weight_1 = 1:4,
+    weight2 = 4:1
+  )
+)
+stopifnot(
+  c("survival_1", "survival2", "risk_1", "risk2") \%in\% names(dt_8)
 )
 
 }

@@ -60,50 +60,55 @@ weights_arg_to_weights_dt.data.table <- function(
   weights
 }
 
-add_weights_column <- function(
+add_weight_columns__ <- function(
   stats_dt,
   stratum_col_nms,
   weights_dt,
   adjust_col_nms = setdiff(names(weights_dt), "weight")
 ) {
-  tmp_col_nms <- tmp_nms(
-    prefixes = c("tmp_w_", "tmp_w_sum_"),
+  weight_col_nms <- names(weights_dt)[grepl("^weight", names(weights_dt))]
+  tmp_weight_col_nms <- tmp_nms(
+    prefixes = paste0(weight_col_nms, "_"),
     avoid = union(names(stats_dt), names(weights_dt)),
   )
-  tmp_w_col_nm <- tmp_col_nms[1]
-  tmp_w_sum_col_nm <- tmp_col_nms[2]
-  # @codedoc_comment_block directadjusting:::add_weights_column
+  tmp_weight_sum_col_nm <- tmp_nms(
+    prefixes = "tmp_w_sum_",
+    avoid = union(names(stats_dt), names(weights_dt)),
+  )
+  # @codedoc_comment_block directadjusting:::add_weight_columns__
   #   + Weights are merged into `stats_dt` in-place by making a left join
-  #     on `weights_dt` using `stats_dt` and adding column `weight` resulting
-  #     from this join into `stats_dt`.
-  # @codedoc_comment_block directadjusting:::add_weights_column
+  #     of `stats_dt` and `weights_dt`.
+  # @codedoc_comment_block directadjusting:::add_weight_columns__
   data.table::set(
     x = stats_dt,
-    j = tmp_w_col_nm,
+    j = tmp_weight_col_nms,
     value = weights_dt[
       i = stats_dt,
-      on = eval(adjust_col_nms),
+      on = adjust_col_nms,
       #' @importFrom data.table .SD
       j = .SD,
-      .SDcols = "weight"
+      .SDcols = weight_col_nms
     ]
   )
-  # @codedoc_comment_block directadjusting:::add_weights_column
+  # @codedoc_comment_block directadjusting:::add_weight_columns__
   #   + Re-scale weights to sum to one within each stratum defined by
   #     `stratum_col_nms`.
-  # @codedoc_comment_block directadjusting:::add_weights_column
-  stats_dt[
-    #' @importFrom data.table .SD :=
-    j = (tmp_w_sum_col_nm) := lapply(.SD, sum),
-    .SDcols = tmp_w_col_nm,
-    by = eval(stratum_col_nms)
-  ]
-  data.table::set(
-    stats_dt,
-    j = tmp_w_col_nm,
-    value = stats_dt[[tmp_w_col_nm]] / stats_dt[[tmp_w_sum_col_nm]]
-  )
-  data.table::set(stats_dt, j = tmp_w_sum_col_nm, value = NULL)
-  data.table::setattr(stats_dt, "tmp_w_col_nm", tmp_w_col_nm)
+  # @codedoc_comment_block directadjusting:::add_weight_columns__
+  lapply(tmp_weight_col_nms, function(tmp_weight_col_nm) {
+    stats_dt[
+      #' @importFrom data.table .SD :=
+      j = (tmp_weight_sum_col_nm) := lapply(.SD, sum),
+      .SDcols = tmp_weight_col_nm,
+      by = eval(stratum_col_nms)
+    ]
+    data.table::set(
+      stats_dt,
+      j = tmp_weight_col_nm,
+      value = stats_dt[[tmp_weight_col_nm]] / stats_dt[[tmp_weight_sum_col_nm]]
+    )
+  })
+  data.table::set(stats_dt, j = tmp_weight_sum_col_nm, value = NULL)
+  names(tmp_weight_col_nms) <- sub("weight", "", weight_col_nms)
+  data.table::setattr(stats_dt, "tmp_weight_col_nms", tmp_weight_col_nms)
   invisible(stats_dt)
 }

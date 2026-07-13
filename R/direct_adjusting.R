@@ -40,7 +40,8 @@
 #' Names of columns in `stats_dt` by which statistics are currently stratified
 #' and by which the statistics should be adjusted (e.g. `"agegroup"`).
 #'
-#' - `NULL`: No adjusting is performed.
+#' - `NULL`: If `weights` is a `data.table`, use its stratifying columns. Else
+#'   no adjusting is performed.
 #' - `character`: Adjust by these columns.
 #' @template weights_arg
 #' @examples
@@ -60,7 +61,7 @@
 #'   sex = rep(1:2, each = 4),
 #'   ag = rep(1:4, times = 2),
 #'   e = counts / offsets,
-#'   v = counts / (offsets ** 2)
+#'   v = counts / (offsets**2)
 #' )
 #'
 #' # adjusted by age group
@@ -76,7 +77,7 @@
 #' )
 #'
 #' # adjusted by smaller age groups, stratified by larger age groups
-#' my_stats[, "ag2" := c(1,1, 2,2, 1,1, 2,2)]
+#' my_stats[, "ag2" := c(1, 1, 2, 2, 1, 1, 2, 2)]
 #' my_adj_stats <- directly_adjusted_estimates(
 #'   stats_dt = my_stats,
 #'   stat_col_nms = "e",
@@ -179,15 +180,14 @@
 #' stats_dt_6 <- data.table::data.table(
 #'   age_group = 1:4,
 #'   survival = c(0.20, 0.40, 0.60, 0.80),
-#'   var = 0.05 ^ 2
+#'   survival_var = 0.05^2
 #' )
-#'
-#' # you can use conf_method to pass whatever to
+#' # you can use conf_methods to pass whatever to
 #' # `delta_method_confidence_intervals`.
 #' dt_6 <- directadjusting::directly_adjusted_estimates(
 #'   stats_dt = stats_dt_6,
 #'   stat_col_nms = "survival",
-#'   var_col_nms = "var",
+#'   var_col_nms = "survival_var",
 #'   adjust_col_nms = "age_group",
 #'   weights = data.table::data.table(
 #'     age_group = 1:4,
@@ -199,6 +199,46 @@
 #'       g_inv = quote(stats::pnorm(g))
 #'     )
 #'   )
+#' )
+#'
+#' # the wame weights data.table can contain more than one weight column
+#' dt_7 <- directadjusting::directly_adjusted_estimates(
+#'   stats_dt = stats_dt_6,
+#'   stat_col_nms = "survival",
+#'   var_col_nms = "survival_var",
+#'   adjust_col_nms = "age_group",
+#'   weights = data.table::data.table(
+#'     age_group = 1:4,
+#'     weight_1 = 1:4,
+#'     weight2 = 4:1
+#'   )
+#' )
+#' stopifnot(
+#'   c("survival_1", "survival2") %in% names(dt_7)
+#' )
+#'
+#' # ... and multiple statistics columns as well
+#' data.table::set(
+#'   x = stats_dt_6,
+#'   j = c("risk", "risk_var"),
+#'   value = list(
+#'     1 - stats_dt_6[["survival"]],
+#'     stats_dt_6[["survival_var"]]
+#'   )
+#' )
+#' dt_8 <- directadjusting::directly_adjusted_estimates(
+#'   stats_dt = stats_dt_6,
+#'   stat_col_nms = c("survival", "risk"),
+#'   var_col_nms = c("survival_var", "risk_var"),
+#'   adjust_col_nms = "age_group",
+#'   weights = data.table::data.table(
+#'     age_group = 1:4,
+#'     weight_1 = 1:4,
+#'     weight2 = 4:1
+#'   )
+#' )
+#' stopifnot(
+#'   c("survival_1", "survival2", "risk_1", "risk2") %in% names(dt_8)
 #' )
 #'
 #' @eval codedoc::pkg_doc_fun("directadjusting::directly_adjusted_estimates")
@@ -282,17 +322,26 @@ directly_adjusted_estimates <- function(
     work_dt <- data.table::setDT(as.list(stats_dt)[keep_col_nms])
     work_dt[]
   })
-  tmp_stratum_col_nm <- tmp_nms(
-    prefixes = "tmp_stratum_col_",
-    avoid = names(work_dt)
-  )
+  tmp_stratum_col_nm <- NULL
   if (length(stratum_col_nms) == 0L) {
+    tmp_stratum_col_nm <- tmp_nms(
+      prefixes = "tmp_stratum_col_",
+      avoid = names(work_dt)
+    )
     stratum_col_nms <- tmp_stratum_col_nm
-    on.exit(data.table::set(out, j = tmp_stratum_col_nm, value = NULL))
     data.table::set(work_dt, j = tmp_stratum_col_nm, value = TRUE)
   }
 
   # prepare data for adjusted estimates and CIs --------------------------------
+  if (is.null(adjust_col_nms) && is.data.frame(weights)) {
+    # @codedoc_comment_block news("directadjusting::directly_adjusted_estimates", "2026-07-10", "0.7.0")
+    # `directadjusting::directly_adjusted_estimates` arg `adjust_col_nms` is
+    # now automatically
+    # determined based on `weights` if `weights` is a `data.frame` /
+    # `data.table`.
+    # @codedoc_comment_block news("directadjusting::directly_adjusted_estimates", "2026-07-10", "0.7.0")
+    adjust_col_nms <- names(weights)[!grepl("^weight", names(weights))]
+  }
   if (length(adjust_col_nms) == 0) {
     # @codedoc_comment_block news("directadjusting::direct_adjusted_estimates", "2025-11-25", "0.5.0")
     # `directadjusting::direct_adjusted_estimates` now allows for the sake of
@@ -310,12 +359,12 @@ directly_adjusted_estimates <- function(
     )
     weights_dt <- data.table::data.table(
       x = TRUE,
-      weight = 1L
+      weight = 1.0
     )
     data.table::setnames(weights_dt, "x", adjust_col_nms)
   } else {
     # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-    # - Handles argument `weights` in order to produce a `data.table` of weights
+    # - Handle argument `weights` in order to produce a `data.table` of weights
     #   if it wasn't one already.
     # @codedoc_comment_block directadjusting::directly_adjusted_estimates
     weights_dt <- weights_arg_to_weights_dt(
@@ -326,130 +375,145 @@ directly_adjusted_estimates <- function(
   }
 
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-  # - Inserts the weights into `stats_dt`.
-  # @codedoc_insert_comment_block directadjusting:::add_weights_column
+  # - Insert the weights into `stats_dt`.
+  # @codedoc_insert_comment_block directadjusting:::add_weight_columns__
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-  add_weights_column(
+  add_weight_columns__(
     stats_dt = work_dt,
     stratum_col_nms = stratum_col_nms,
     weights_dt = weights_dt,
     adjust_col_nms = adjust_col_nms
   )
-  tmp_w_col_nm <- attr(work_dt, "tmp_w_col_nm")
+  tmp_weight_col_nms <- attr(work_dt, "tmp_weight_col_nms")
 
   # prep output ----------------------------------------------------------------
-  if (!is.null(stratum_col_nms)) {
-    out <- subset(
-      work_dt,
-      subset = !duplicated(work_dt, by = stratum_col_nms)
-    )
-    data.table::setkeyv(out, stratum_col_nms)
-  } else {
-    out <- data.table::data.table(
-      stat = NA_integer_
-    )
-    data.table::setnames(out, "stat", stat_col_nms[1])
-  }
+  out <- work_dt[
+    i = !duplicated(work_dt, by = stratum_col_nms),
+    j = .SD,
+    .SDcols = stratum_col_nms
+  ]
 
   # delta method confidence intervals ------------------------------------------
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  # - Compute weighted averages of `stat_col_nms` and `var_col_nms`
+  #   (the latter with squared weights because they are variances)
+  #   over `adjust_col_nms`. This results in a `data.table` without column(s)
+  #   `adjust_col_nms`.
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  meta_dt <- lapply(seq_along(stat_col_nms), function(i) {
+    # @codedoc_comment_block news("directadjusting::directly_adjusted_estimates", "2026-07-13", "0.7.0")
+    # `directadjusting::directly_adjusted_estimates` can now handle `weights`
+    # `data.table` with more than one column containing weights, e.g.
+    # `weight_europe`, `weight_world`.
+    # @codedoc_comment_block news("directadjusting::directly_adjusted_estimates", "2026-07-13", "0.7.0")
+    suffix_set <- names(tmp_weight_col_nms)
+    meta_dt <- lapply(seq_along(suffix_set), function(j) {
+      tmp_weight_col_nm_ij <- tmp_weight_col_nms[j]
+      stat_col_nms_ij <- paste0(stat_col_nms[i], suffix_set[j])
+      var_col_nms_ij <- paste0(var_col_nms[i], suffix_set[j])
+      data.table::set(
+        x = work_dt,
+        j = stat_col_nms_ij,
+        value = stats_dt[[stat_col_nms[i]]] * work_dt[[tmp_weight_col_nm_ij]]
+      )
+      data.table::set(
+        x = work_dt,
+        j = var_col_nms_ij,
+        value = stats_dt[[var_col_nms[i]]] *
+          (work_dt[[tmp_weight_col_nm_ij]]^2)
+      )
+      data.table::data.table(
+        stat_col_nm = stat_col_nms[i],
+        stat_col_nm_w = stat_col_nms_ij,
+        var_col_nm = var_col_nms[i],
+        var_col_nm_w = var_col_nms_ij
+      )[]
+    })
+    meta_dt <- data.table::rbindlist(meta_dt)
+    return(meta_dt[])
+  })
+  meta_dt <- data.table::rbindlist(meta_dt)
   local({
-    # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-    # - Computes weighted averages of `stat_col_nms` and `var_col_nms`
-    #   (the latter with squared weights because they are variances)
-    #   over `adjust_col_nms`. This results in a `data.table` without column(s)
-    #   `adjust_col_nms`.
-    # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-    data.table::set(
-      work_dt,
-      j = stat_col_nms,
-      value = lapply(stat_col_nms, function(col_nm) {
-        work_dt[[col_nm]] * work_dt[[tmp_w_col_nm]]
-      })
-    )
-    data.table::set(
-      x = work_dt,
-      j = var_col_nms,
-      value = lapply(var_col_nms, function(vcn) {
-        work_dt[[vcn]] * (work_dt[[tmp_w_col_nm]]^2)
-      })
-    )
+    value_col_nms <- c(meta_dt[["stat_col_nm_w"]], meta_dt[["var_col_nm_w"]])
     adjusted_stats_dt <- work_dt[
       #' @importFrom data.table .SD
       j = lapply(.SD, sum),
-      .SDcols = c(stat_col_nms, var_col_nms),
+      .SDcols = value_col_nms,
       keyby = eval(stratum_col_nms)
     ]
     data.table::set(
       x = out,
-      j = c(stat_col_nms, var_col_nms),
-      value = lapply(
-        c(stat_col_nms, var_col_nms),
-        function(col_nm) {
-          adjusted_stats_dt[[col_nm]]
-        }
-      )
+      j = value_col_nms,
+      value = as.list(adjusted_stats_dt)[value_col_nms]
+    )
+  })
+  data.table::set(
+    x = meta_dt,
+    j = c("conf_method", "conf_lvl"),
+    value = list(
+      as.list(rep(conf_methods, each = length(tmp_weight_col_nms))),
+      rep(conf_lvls, each = length(tmp_weight_col_nms))
+    )
+  )
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  # - For each statistic:
+  #   + If the correspoding `conf_methods` element is `"none"`, skip confidence
+  #     intervals computation.
+  #   + Otherwise call `[delta_method_confidence_intervals]`.
+  # @codedoc_comment_block directadjusting::directly_adjusted_estimates
+  lapply(seq_len(nrow(meta_dt)), function(i) {
+    if (
+      is.character(meta_dt[["conf_method"]][[i]]) &&
+        meta_dt[["conf_method"]][[i]] == "none"
+    ) {
+      return(NULL)
+    }
+    ci_dt <- delta_method_confidence_intervals(
+      statistics = out[[meta_dt[["stat_col_nm_w"]][[i]]]],
+      variances = out[[meta_dt[["var_col_nm_w"]][[i]]]],
+      conf_lvl = meta_dt[["conf_lvl"]][[i]],
+      conf_method = meta_dt[["conf_method"]][[i]]
     )
 
-    lapply(seq_along(stat_col_nms), function(i) {
-      stat_col_nm <- stat_col_nms[i]
-      var_col_nm <- var_col_nms[i]
-      conf_lvl <- conf_lvls[i]
-      conf_method <- conf_methods[[i]]
-      # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-      # - For each `i` in  `seq_along(stat_col_nm)`:
-      #   + If `conf_methods[[i]]` is `"none"`, doesn't compute confidence
-      #     intervals.
-      #   + Otherwise calls `[delta_method_confidence_intervals]`.
-      # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-      if (is.character(conf_method) && conf_method == "none") {
-        return(NULL)
-      }
-      ci_dt <- delta_method_confidence_intervals(
-        statistics = adjusted_stats_dt[[stat_col_nm]],
-        variances = adjusted_stats_dt[[var_col_nm]],
-        conf_lvl = conf_lvl,
-        conf_method = conf_method
-      )
-
-      ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
-      data.table::set(
-        x = out,
-        j = ci_col_nms,
-        value = lapply(c("ci_lo", "ci_hi"), function(col_nm) {
-          ci_dt[[col_nm]]
-        })
-      )
-      NULL
-    })
+    ci_col_nms <- paste0(meta_dt[["stat_col_nm_w"]][[i]], c("_lo", "_hi"))
+    data.table::set(
+      x = out,
+      j = ci_col_nms,
+      value = as.list(ci_dt)[c("ci_lo", "ci_hi")]
+    )
+    data.table::set(
+      x = meta_dt,
+      i = i,
+      j = c("ci_lo_col_nm_w", "ci_hi_col_nm_w"),
+      value = as.list(ci_col_nms)
+    )
+    return(NULL)
   })
 
   # final touches --------------------------------------------------------------
-  ordered_stat_col_nms <- unlist(lapply(
-    seq_along(stat_col_nms),
-    function(i) {
-      stat_col_nm <- stat_col_nms[i]
-      var_col_nm <- var_col_nms[i]
-      ci_col_nms <- paste0(stat_col_nm, c("_lo", "_hi"))
-
-      order_col_nms <- intersect(
-        c(stat_col_nm, var_col_nm, ci_col_nms),
-        names(out)
-      )
-      order_col_nms
-    }
-  ))
-  keep_col_nms <- c(stratum_col_nms, ordered_stat_col_nms)
-  del_col_nms <- setdiff(names(out), keep_col_nms)
-  if (length(del_col_nms)) {
-    data.table::set(out, j = del_col_nms, value = NULL)
-  }
-  data.table::setcolorder(out, keep_col_nms)
+  ordered_stat_col_nms <- unlist(
+    lapply(seq_len(nrow(meta_dt)), function(i) {
+      unlist(meta_dt[
+        i = i,
+        j = .SD,
+        .SDcols = c(
+          "stat_col_nm_w",
+          "var_col_nm_w",
+          "ci_lo_col_nm_w",
+          "ci_hi_col_nm_w"
+        )
+      ])
+    }),
+    use.names = FALSE
+  )
+  data.table::setcolorder(out, c(stratum_col_nms, ordered_stat_col_nms))
   data.table::setkeyv(out, stratum_col_nms)
   if (identical(stratum_col_nms, tmp_stratum_col_nm)) {
+    data.table::set(out, j = tmp_stratum_col_nm, value = NULL)
     stratum_col_nms <- NULL
   }
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-  # - Sets attribute `directly_adjusted_estimates_meta`. It is a list
+  # - Set attribute `directly_adjusted_estimates_meta`. It is a list
   #   containing:
   #   + `call`: The call to `directadjusting::directly_adjusted_estimates`.
   #   + `stat_col_nms`: The argument as given by the user.
@@ -459,6 +523,19 @@ directly_adjusted_estimates <- function(
   #   + `conf_lvls`: The argument, but always of length `length(stat_col_nms)`.
   #   + `conf_methods`: The argument, but always of length
   #     `length(stat_col_nms)`.
+  #   + `meta_dt`: Contains columns
+  #     * `stat_col_nm`: Elements of arg `stat_col_nms`.
+  #     * `stat_col_nm_w`: Corresponding name of column containing weighted
+  #       statistics. These columns names are in the output of
+  #       `directadjusting::directly_adjusted_estimates`.
+  #     * `var_col_nm`: Elements of arg `var_col_nms`.
+  #     * `var_col_nm_w`: Like `stat_col_nm_w` but for variance column names.
+  #     * `conf_method`: Correspoding `conf_methods` elements.
+  #     * `conf_lvl`: Correspoding `conf_lvls` elements.
+  #     * `ci_lo_col_nm_w`: Name of confidence interval lower bound of the
+  #        weighted statistic.
+  #     * `ci_hi_col_nm_w`: Name of confidence interval upper bound of the
+  #        weighted statistic.
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
   call <- match.call()
   data.table::setattr(
@@ -471,17 +548,30 @@ directly_adjusted_estimates <- function(
       "stratum_col_nms",
       "adjust_col_nms",
       "conf_lvls",
-      "conf_methods"
+      "conf_methods",
+      "meta_dt"
     ))
   )
 
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
-  # - Returns a `data.table`. Returned columns are those given via
-  #   `stratum_col_nms`, `stat_col_nms`, and `var_col_nms`.
+  # - Return a `data.table`. Returned columns are those given via
+  #   `stratum_col_nms`, `stat_col_nms`, and `var_col_nms` and additional
+  #   confidence interval columns. If `weights` was a
+  #   `data.table`, the names of the stats, variances, and confidence bounds
+  #   columns are identified by the respective suffix of the weight column,
+  #   e.g. `stat_col_nms = c("s", "r")` and
+  #   `weights = data.table(age_group = 1:4, weight_1 = 1:4, weight2 = 4:1)`
+  #   will result in output columns `s_1`, `s2`, `r_1`, and `r2` etc.
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
   #' @return
   #' Returns a `data.table`. Returned columns are those given via
-  #' `stratum_col_nms`, `stat_col_nms`, and `var_col_nms`.
+  #' `stratum_col_nms`, `stat_col_nms`, and `var_col_nms` and additional
+  #' confidence interval columns. If `weights` was a
+  #' `data.table`, the names of the stats, variances, and confidence bounds
+  #' columns are identified by the respective suffix of the weight column,
+  #' e.g. `stat_col_nms = c("s", "r")` and
+  #' `weights = data.table(age_group = 1:4, weight_1 = 1:4, weight2 = 4:1)`
+  #' will result in output columns `s_1`, `s2`, `r_1`, and `r2` etc.
   return(out[])
 }
 

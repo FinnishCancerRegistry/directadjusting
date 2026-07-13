@@ -76,6 +76,24 @@ print(my_adj_stats)
 
 \section{News}{
 
+\subsection{News for version 0.7.0}{
+\subsection{directadjusting::directly_adjusted_estimates}{
+
+\code{directadjusting::directly_adjusted_estimates} arg \code{adjust_col_nms} is
+now automatically
+determined based on \code{weights} if \code{weights} is a \code{data.frame} /
+\code{data.table}.
+}
+
+\subsection{directadjusting::directly_adjusted_estimates}{
+
+\code{directadjusting::directly_adjusted_estimates} can now handle \code{weights}
+\code{data.table} with more than one column containing weights, e.g.
+\code{weight_europe}, \code{weight_world}.
+}
+
+}
+
 \subsection{News for version 0.6.1}{
 \subsection{directadjusting}{
 
@@ -147,6 +165,11 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Joonas Miettinen \email{joonas.miettinen@cancer.fi} (\href{https://orcid.org/0000-0001-8624-6754}{ORCID})
+
+Authors:
+\itemize{
+  \item Joonas Miettinen \email{joonas.miettinen@cancer.fi} (\href{https://orcid.org/0000-0001-8624-6754}{ORCID})
+}
 
 }
 \keyword{internal}
