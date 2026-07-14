@@ -11,7 +11,7 @@ Description: Compute estimates and confidence intervals of weighted
     delta method with either using known formulae or via algorithmic or
     numerical derivation.
 License: MIT + file LICENSE
-URL: https://github.com/FinnishCancerRegistry/directadjusting/
+URL: https://github.com/FinnishCancerRegistry/directadjusting
 BugReports: 
     https://github.com/FinnishCancerRegistry/directadjusting/issues
 Depends:
