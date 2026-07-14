@@ -335,7 +335,7 @@ directly_adjusted_estimates <- function(
   # prepare data for adjusted estimates and CIs --------------------------------
   if (is.null(adjust_col_nms) && is.data.frame(weights)) {
     # @codedoc_comment_block news("directadjusting::directly_adjusted_estimates", "2026-07-10", "0.7.0")
-    # `directadjusting::directly_adjusted_estimates` arg `adjust_col_nms` is
+    # `directadjusting::directly_adjusted_estimates` argument `adjust_col_nms` is
     # now automatically
     # determined based on `weights` if `weights` is a `data.frame` /
     # `data.table`.
@@ -457,7 +457,7 @@ directly_adjusted_estimates <- function(
   )
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
   # - For each statistic:
-  #   + If the correspoding `conf_methods` element is `"none"`, skip confidence
+  #   + If the corresponding `conf_methods` element is `"none"`, skip confidence
   #     intervals computation.
   #   + Otherwise call `[delta_method_confidence_intervals]`.
   # @codedoc_comment_block directadjusting::directly_adjusted_estimates
@@ -524,11 +524,11 @@ directly_adjusted_estimates <- function(
   #   + `conf_methods`: The argument, but always of length
   #     `length(stat_col_nms)`.
   #   + `meta_dt`: Contains columns
-  #     * `stat_col_nm`: Elements of arg `stat_col_nms`.
+  #     * `stat_col_nm`: Elements of argument `stat_col_nms`.
   #     * `stat_col_nm_w`: Corresponding name of column containing weighted
   #       statistics. These columns names are in the output of
   #       `directadjusting::directly_adjusted_estimates`.
-  #     * `var_col_nm`: Elements of arg `var_col_nms`.
+  #     * `var_col_nm`: Elements of argument `var_col_nms`.
   #     * `var_col_nm_w`: Like `stat_col_nm_w` but for variance column names.
   #     * `conf_method`: Correspoding `conf_methods` elements.
   #     * `conf_lvl`: Correspoding `conf_lvls` elements.

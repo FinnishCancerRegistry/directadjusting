@@ -79,7 +79,7 @@ print(my_adj_stats)
 \subsection{News for version 0.7.0}{
 \subsection{directadjusting::directly_adjusted_estimates}{
 
-\code{directadjusting::directly_adjusted_estimates} arg \code{adjust_col_nms} is
+\code{directadjusting::directly_adjusted_estimates} argument \code{adjust_col_nms} is
 now automatically
 determined based on \code{weights} if \code{weights} is a \code{data.frame} /
 \code{data.table}.
@@ -158,7 +158,7 @@ Remove deprecated \code{directadjusting::direct_adjusted_estimates}. Use
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/FinnishCancerRegistry/directadjusting/}
+  \item \url{https://github.com/FinnishCancerRegistry/directadjusting}
   \item Report bugs at \url{https://github.com/FinnishCancerRegistry/directadjusting/issues}
 }
 

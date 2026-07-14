@@ -4,7 +4,7 @@
 
 ### directadjusting::directly_adjusted_estimates
 
-`directadjusting::directly_adjusted_estimates` arg `adjust_col_nms` is
+`directadjusting::directly_adjusted_estimates` argument `adjust_col_nms` is
 now automatically
 determined based on `weights` if `weights` is a `data.frame` /
 `data.table`.

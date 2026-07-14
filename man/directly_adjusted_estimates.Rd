@@ -114,7 +114,7 @@ over \code{adjust_col_nms}. This results in a \code{data.table} without column(s
 \code{adjust_col_nms}.
 \item For each statistic:
 \itemize{
-\item If the correspoding \code{conf_methods} element is \code{"none"}, skip confidence
+\item If the corresponding \code{conf_methods} element is \code{"none"}, skip confidence
 intervals computation.
 \item Otherwise call \verb{[delta_method_confidence_intervals]}.
 }
@@ -131,11 +131,11 @@ containing:
 \code{length(stat_col_nms)}.
 \item \code{meta_dt}: Contains columns
 \itemize{
-\item \code{stat_col_nm}: Elements of arg \code{stat_col_nms}.
+\item \code{stat_col_nm}: Elements of argument \code{stat_col_nms}.
 \item \code{stat_col_nm_w}: Corresponding name of column containing weighted
 statistics. These columns names are in the output of
 \code{directadjusting::directly_adjusted_estimates}.
-\item \code{var_col_nm}: Elements of arg \code{var_col_nms}.
+\item \code{var_col_nm}: Elements of argument \code{var_col_nms}.
 \item \code{var_col_nm_w}: Like \code{stat_col_nm_w} but for variance column names.
 \item \code{conf_method}: Correspoding \code{conf_methods} elements.
 \item \code{conf_lvl}: Correspoding \code{conf_lvls} elements.
@@ -158,7 +158,7 @@ will result in output columns \code{s_1}, \code{s2}, \code{r_1}, and \code{r2} e
 \section{News for version 0.7.0}{
 
 
-\code{directadjusting::directly_adjusted_estimates} arg \code{adjust_col_nms} is
+\code{directadjusting::directly_adjusted_estimates} argument \code{adjust_col_nms} is
 now automatically
 determined based on \code{weights} if \code{weights} is a \code{data.frame} /
 \code{data.table}.
