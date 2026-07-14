@@ -98,8 +98,13 @@ This attribute is a list which contains elements \code{conf_lvl} and
 }
 
 \examples{
-
 # directadjusting::delta_method_confidence_intervals
+
+# this data.table::setDTthreads call is included here only to
+# conform to the CRAN submission requirement to only use at most 2
+# threads. you do not need to set this to use directadjusting.
+data.table::setDTthreads(2L)
+
 dt_1 <- directadjusting::delta_method_confidence_intervals(
   statistics = 0.9,
   variances = 0.1,

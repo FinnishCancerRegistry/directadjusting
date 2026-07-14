@@ -45,8 +45,13 @@
 #' - `character`: Adjust by these columns.
 #' @template weights_arg
 #' @examples
-#'
 #' # directadjusting::directly_adjusted_estimates
+#'
+#' # this data.table::setDTthreads call is included here only to
+#' # conform to the CRAN submission requirement to only use at most 2
+#' # threads. you do not need to set this to use directadjusting.
+#' data.table::setDTthreads(2L)
+#'
 #' library("data.table")
 #' set.seed(1337)
 #'
