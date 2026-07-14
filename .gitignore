@@ -8,3 +8,4 @@ sandbox*.R
 .radian_history
 CRAN-SUBMISSION
 revdep/
+revdepcheck
